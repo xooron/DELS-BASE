@@ -43,6 +43,8 @@
         main { padding: 16px; max-width: 500px; margin: 0 auto; }
         .menu-item { background: var(--panel); padding: 18px 20px; border-radius: 24px; display: flex; align-items: flex-start; gap: 18px; margin-bottom: 12px; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
         .item-icon { width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); color: var(--accent); flex-shrink: 0; }
+        .item-info h3 { margin: 0; font-size: 17px; font-weight: 800; }
+        .item-info p { margin: 4px 0 0; font-size: 12px; color: var(--hint); line-height: 1.4; }
 
         .glass-card { background: var(--panel); border-radius: 30px; padding: 35px 20px; border: 1px solid var(--border); text-align: center; }
         
@@ -61,8 +63,11 @@
         .msg-support { background: rgba(255,255,255,0.1); align-self: flex-start; border-bottom-left-radius: 4px; }
 
         .back-nav { color: var(--accent); font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; font-size: 13px; }
-        #previewImage { width: 100%; border-radius: 15px; margin-top: 10px; display: none; border: 1px solid var(--border); }
-        
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .stat-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 18px; padding: 15px; text-align: center; }
+        .stat-box b { font-size: 20px; display: block; color: var(--accent); }
+        .stat-box span { font-size: 11px; color: var(--hint); text-transform: uppercase; font-weight: 700; }
+
         @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate { animation: viewIn 0.4s var(--spring) forwards; }
     </style>
@@ -96,22 +101,29 @@
             photo: tUser.photo_url || `https://ui-avatars.com/api/?name=${tUser.first_name || 'U'}&background=5856d6&color=fff`
         };
 
-        const VERIFIED = ["@treedexe", "@durovspepka"];
+        const HARD_VERIFIED = ["@treedexe", "@durovspepka"];
         const V_ICON = `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Twitter_Verified_Badge.svg/1280px-Twitter_Verified_Badge.svg.png" class="v-check">`;
 
         let db = {
-            scammers: JSON.parse(localStorage.getItem('DELS_DATABASE_SCAMS')) || [],
-            complaints: JSON.parse(localStorage.getItem('DELS_DATABASE_REPS')) || [],
-            messages: JSON.parse(localStorage.getItem('DELS_DATABASE_CHAT')) || []
+            scammers: JSON.parse(localStorage.getItem('DELS_DATABASE_SCAMS_V2')) || [],
+            complaints: JSON.parse(localStorage.getItem('DELS_DATABASE_REPS_V2')) || [],
+            messages: JSON.parse(localStorage.getItem('DELS_DATABASE_CHAT_V2')) || [],
+            verified: JSON.parse(localStorage.getItem('DELS_DATABASE_VERIFIED_V2')) || []
         };
 
         function sync() {
-            localStorage.setItem('DELS_DATABASE_SCAMS', JSON.stringify(db.scammers));
-            localStorage.setItem('DELS_DATABASE_REPS', JSON.stringify(db.complaints));
-            localStorage.setItem('DELS_DATABASE_CHAT', JSON.stringify(db.messages));
+            localStorage.setItem('DELS_DATABASE_SCAMS_V2', JSON.stringify(db.scammers));
+            localStorage.setItem('DELS_DATABASE_REPS_V2', JSON.stringify(db.complaints));
+            localStorage.setItem('DELS_DATABASE_CHAT_V2', JSON.stringify(db.messages));
+            localStorage.setItem('DELS_DATABASE_VERIFIED_V2', JSON.stringify(db.verified));
         }
 
-        function isValidTarget(str) { return str.startsWith('@') || /^\d+$/.test(str); }
+        function isUserVerified(nick) {
+            if (!nick) return false;
+            return HARD_VERIFIED.includes(nick.toLowerCase()) || db.verified.includes(nick.toLowerCase());
+        }
+
+        function isValidTarget(str) { return str && (str.startsWith('@') || /^\d+$/.test(str)); }
 
         function setPage(html) {
             const app = document.getElementById('app');
@@ -137,11 +149,11 @@
                     </div>
                     <div class="menu-item" onclick="renderReport()">
                         <div class="item-icon"><i data-lucide="shield-alert" size="22"></i></div>
-                        <div class="item-info"><h3>Подать жалобу</h3><p>Сообщите о мошенничестве.</p></div>
+                        <div class="item-info"><h3>Подать жалобу</h3><p>Сообщите о мошеннике.</p></div>
                     </div>
                     <div class="menu-item" onclick="renderGarant()">
                         <div class="item-icon" style="color:var(--success)"><i data-lucide="shield-check" size="22"></i></div>
-                        <div class="item-info"><h3>DELS Гарант</h3><p>Сделки под защитой.</p></div>
+                        <div class="item-info"><h3>DELS Гарант</h3><p>Безопасные сделки.</p></div>
                     </div>
                 </div>
             `);
@@ -149,7 +161,7 @@
 
         function renderMyProfile() {
             const isScam = db.scammers.find(s => s.username.toLowerCase() === ME.username.toLowerCase() || s.id === ME.id);
-            const isV = VERIFIED.includes(ME.username.toLowerCase());
+            const isV = isUserVerified(ME.username);
             const isAdmin = ME.username.toLowerCase() === "@treedexe";
 
             setPage(`
@@ -158,9 +170,11 @@
                     <img src="${ME.photo}" style="width:110px; height:110px; border-radius:35px; border:4px solid var(--accent); padding:3px; object-fit:cover; margin-bottom:15px">
                     <h2 style="margin:0; font-size:26px; font-weight:900">${ME.name}${isV ? V_ICON : ''}</h2>
                     <div style="margin-top:8px; color:var(--hint); font-size:15px; font-weight:600">${ME.username} | ID: ${ME.id}</div>
+                    
                     <div class="status-badge ${isScam ? 'scam-tag' : (isV ? 'verified-tag' : '')}">
                         ${isScam ? 'SCAM' : (isV ? 'ВЕРИФИЦИРОВАН' : 'НЕТ ИНФОРМАЦИИ')}
                     </div>
+                    
                     ${isAdmin ? `<button class="btn-action" style="margin-top:25px; background:#af52de" onclick="renderAdminDashboard()">Управление DELS</button>` : ""}
                 </div>
             `);
@@ -180,8 +194,9 @@
             const q = document.getElementById('sIn').value.trim();
             if(!isValidTarget(q)) return tg.showAlert("Введите ник через @ или числовой ID");
             const scam = db.scammers.find(s => s.username.toLowerCase() === q.toLowerCase() || s.id === q);
-            const isV = VERIFIED.includes(q.toLowerCase());
+            const isV = isUserVerified(q);
             const clean = q.replace('@','');
+
             document.getElementById('sRes').innerHTML = `
                 <div class="glass-card animate" style="margin-top:20px; border-color:${scam ? 'var(--danger)' : 'var(--border)'}">
                     <img src="https://ui-avatars.com/api/?name=${clean}&background=${scam ? 'ff3b30' : (isV ? '00a2ed' : '333')}&color=fff" style="width:80px; height:80px; border-radius:25px; margin-bottom:12px">
@@ -191,13 +206,96 @@
                 </div>`;
         }
 
-        // --- ПОДДЕРЖКА (ЮЗЕР) ---
+        // --- АДМИН-ПАНЕЛЬ ---
+        function renderAdminDashboard() {
+            let h = `<div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left"></i> Назад</div><h2>Админ-панель</h2>
+            
+            <button class="btn-action" style="background:var(--verified); margin-bottom:12px" onclick="renderAdminVerify()">Выдать верификацию</button>
+            <button class="btn-action" style="background:var(--danger); margin-bottom:12px" onclick="renderAdminScamManual()">Добавить в скам-базу</button>
+            <button class="btn-action" style="background:#333; margin-bottom:30px" onclick="renderAdminStats()">Статистика проекта</button>
+
+            <div class="admin-section"><h4>Чаты поддержки</h4>`;
+            
+            const activeUsers = [...new Map(db.messages.filter(m => m.role === 'user').map(m => [m.userId, m])).values()].reverse();
+            activeUsers.forEach(u => {
+                h += `<div class="menu-item animate" onclick="renderAdminChat('${u.userId}', '${u.userNick}')">
+                    <div class="item-icon"><i data-lucide="message-circle"></i></div>
+                    <div class="item-info"><h3>${u.userNick}</h3><p>${u.text.substring(0,30)}...</p></div>
+                </div>`;
+            });
+
+            h += `</div><div class="admin-section"><h4>Жалобы (${db.complaints.length})</h4>`;
+            db.complaints.forEach((c, i) => {
+                h += `<div class="menu-item animate" style="flex-direction:column; gap:8px"><div><b>${c.from}</b> -> <b>${c.target}</b></div><div style="font-size:12px">${c.text}</div><div style="display:flex; gap:8px; width:100%"><button class="btn-action" style="background:var(--success); padding:10px; font-size:11px" onclick="admAppRep(${i})">БАН</button><button class="btn-action" style="background:rgba(255,255,255,0.05); padding:10px; font-size:11px" onclick="admRejRep(${i})">ОТКАЗ</button></div></div>`;
+            });
+            setPage(h);
+        }
+
+        function renderAdminVerify() {
+            setPage(`
+                <div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div>
+                <h2>Верификация</h2>
+                <input type="text" id="vTarget" placeholder="@username пользователя">
+                <button class="btn-action" onclick="admGiveVerify()">Выдать галочку</button>
+                <div style="margin-top:20px" class="admin-section">
+                    <h4>Уже верифицированы:</h4>
+                    ${db.verified.map(v => `<div style="font-size:13px; margin-bottom:5px">${v}</div>`).join('')}
+                </div>
+            `);
+        }
+
+        function admGiveVerify() {
+            const t = document.getElementById('vTarget').value.trim().toLowerCase();
+            if(!t.startsWith('@')) return tg.showAlert("Введите ник с @");
+            if(db.verified.includes(t)) return tg.showAlert("Уже верифицирован");
+            db.verified.push(t);
+            sync(); tg.showAlert("Верификация выдана!"); renderAdminVerify();
+        }
+
+        function renderAdminScamManual() {
+            setPage(`
+                <div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div>
+                <h2>Ручной бан</h2>
+                <input type="text" id="sTarget" placeholder="@username или ID">
+                <textarea id="sReason" placeholder="Причина занесения в базу..."></textarea>
+                <button class="btn-action" onclick="admManualBan()">Забанить навсегда</button>
+            `);
+        }
+
+        function admManualBan() {
+            const t = document.getElementById('sTarget').value.trim();
+            const r = document.getElementById('sReason').value.trim();
+            if(!isValidTarget(t) || !r) return tg.showAlert("Заполните поля корректно");
+            db.scammers.push({username: t, reason: r, id: t.replace('@','')});
+            sync(); tg.showAlert("Добавлен в базу!"); renderAdminDashboard();
+        }
+
+        function renderAdminStats() {
+            const totalScams = db.scammers.length;
+            const totalReps = db.complaints.length;
+            const totalMsgs = db.messages.length;
+            const totalV = db.verified.length + HARD_VERIFIED.length;
+
+            setPage(`
+                <div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div>
+                <h2>Статистика проекта</h2>
+                <div class="stat-grid">
+                    <div class="stat-box"><b>${totalScams}</b><span>Скамеров</span></div>
+                    <div class="stat-box"><b>${totalReps}</b><span>Жалоб</span></div>
+                    <div class="stat-box"><b>${totalMsgs}</b><span>Сообщений</span></div>
+                    <div class="stat-box"><b>${totalV}</b><span>Верифицированных</span></div>
+                </div>
+                <div style="margin-top:30px; font-size:12px; color:var(--hint); text-align:center">Данные актуальны на ${new Date().toLocaleString()}</div>
+            `);
+        }
+
+        // --- ОСТАЛЬНОЕ (ЧАТ, ЖАЛОБЫ) ---
         function renderSupport() {
             if(ME.username.toLowerCase() === "@treedexe") return renderAdminDashboard();
             let chatH = `<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><h2>Поддержка</h2><div id="chatBox">`;
-            const myMsgs = db.messages.filter(m => m.userId === ME.id);
-            if(myMsgs.length === 0) chatH += `<div class="chat-bubble msg-support">Опишите вашу проблему ниже.</div>`;
-            myMsgs.forEach(m => chatH += `<div class="chat-bubble ${m.role === 'admin' ? 'msg-support' : 'msg-me'}">${m.text}</div>`);
+            const myHistory = db.messages.filter(m => m.userId === ME.id);
+            if(myHistory.length === 0) chatH += `<div class="chat-bubble msg-support">Опишите вашу проблему.</div>`;
+            myHistory.forEach(m => chatH += `<div class="chat-bubble ${m.role === 'admin' ? 'msg-support' : 'msg-me'}">${m.text}</div>`);
             chatH += `</div><div style="display:flex; gap:10px"><input type="text" id="cIn" placeholder="Сообщение..."><button class="btn-action" style="width:60px; padding:0" onclick="userSend()"><i data-lucide="send"></i></button></div>`;
             setPage(chatH);
             const b = document.getElementById('chatBox'); b.scrollTop = b.scrollHeight;
@@ -210,33 +308,11 @@
             sync(); renderSupport();
         }
 
-        // --- АДМИНКА ---
-        function renderAdminDashboard() {
-            let h = `<div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left"></i> Назад</div><h2>Админ-панель</h2>
-            <div class="admin-section"><h4>Активные чаты</h4>`;
-            
-            // Список уникальных пользователей, которые писали
-            const users = [...new Map(db.messages.filter(m => m.role === 'user').map(m => [m.userId, m])).values()].reverse();
-            
-            users.forEach(u => {
-                h += `<div class="menu-item animate" onclick="renderAdminChat('${u.userId}', '${u.userNick}')">
-                    <div class="item-icon"><i data-lucide="message-circle"></i></div>
-                    <div class="item-info"><h3>${u.userNick}</h3><p>${u.text.substring(0,30)}...</p></div>
-                </div>`;
-            });
-
-            h += `</div><div class="admin-section"><h4>Жалобы (${db.complaints.length})</h4>`;
-            db.complaints.forEach((c, i) => {
-                h += `<div class="menu-item" style="flex-direction:column; gap:8px"><div><b>${c.from}</b> -> <b>${c.target}</b></div><div style="font-size:12px">${c.text}</div><div style="display:flex; gap:8px; width:100%"><button class="btn-action" style="background:var(--success); padding:10px; font-size:11px" onclick="admAppRep(${i})">БАН</button><button class="btn-action" style="background:rgba(255,255,255,0.05); padding:10px; font-size:11px" onclick="admRejRep(${i})">ОТКАЗ</button></div></div>`;
-            });
-            setPage(h || '<h3>Активностей нет</h3>');
-        }
-
         function renderAdminChat(uid, unick) {
             let h = `<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> К списку</div><h2>Чат с ${unick}</h2><div id="chatBox">`;
             const msgs = db.messages.filter(m => m.userId === uid);
             msgs.forEach(m => h += `<div class="chat-bubble ${m.role === 'admin' ? 'msg-me' : 'msg-support'}">${m.text}</div>`);
-            h += `</div><div style="display:flex; gap:10px"><input type="text" id="admAns" placeholder="Ответ..."><button class="btn-action" style="width:60px; padding:0" onclick="admSendAns('${uid}', '${unick}')"><i data-lucide="send"></i></button></div><button class="btn-action" style="background:rgba(255,255,255,0.05); margin-top:10px" onclick="admDelChat('${uid}')">Закрыть чат</button>`;
+            h += `</div><div style="display:flex; gap:10px"><input type="text" id="admAns" placeholder="Ответ..."><button class="btn-action" style="width:60px; padding:0" onclick="admSendAns('${uid}', '${unick}')"><i data-lucide="send"></i></button></div><button class="btn-action" style="background:rgba(255,255,255,0.05); margin-top:10px" onclick="admDelChat('${uid}')">Закрыть обращение</button>`;
             setPage(h);
             const b = document.getElementById('chatBox'); b.scrollTop = b.scrollHeight;
         }
@@ -252,7 +328,6 @@
         function admAppRep(i) { const c = db.complaints[i]; db.scammers.push({username:c.target, reason:c.text, id:c.target.replace('@','')}); db.complaints.splice(i, 1); sync(); renderAdminDashboard(); }
         function admRejRep(i) { db.complaints.splice(i, 1); sync(); renderAdminDashboard(); }
 
-        // --- ЖАЛОБА ---
         let repPhoto = "";
         function renderReport() {
             repPhoto = "";
