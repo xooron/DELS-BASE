@@ -56,6 +56,7 @@
 
         input, textarea { width: 100%; background: rgba(24, 24, 27, 0.6); border: 1px solid var(--border); padding: 16px; border-radius: 18px; color: #fff; font-size: 15px; margin-bottom: 10px; }
         .btn-action { background: var(--accent); color: #fff; border: none; width: 100%; padding: 18px; border-radius: 20px; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.2s; }
+        .btn-action:active { transform: scale(0.98); opacity: 0.9; }
         
         .back-nav { color: var(--accent); font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; font-size: 13px; }
         
@@ -64,18 +65,21 @@
         .stat-box b { font-size: 20px; display: block; color: var(--accent); }
         .stat-box span { font-size: 10px; color: var(--hint); text-transform: uppercase; font-weight: 700; }
 
-        /* ИСПРАВЛЕННЫЙ СТИЛЬ ДЛЯ ПРЕВЬЮ ФОТО */
+        /* МАЛЕНЬКОЕ ПРЕВЬЮ ФОТО */
         #previewImage { 
-            max-width: 180px; 
-            max-height: 180px; 
+            max-width: 140px; 
+            max-height: 140px; 
             width: auto; 
             height: auto; 
             border-radius: 12px; 
-            margin: 15px auto; 
+            margin: 10px auto; 
             display: none; 
             border: 1px solid var(--border); 
-            object-fit: contain;
+            object-fit: cover;
         }
+
+        .admin-section { text-align: left; margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .admin-section h4 { margin: 0 0 12px 0; font-size: 13px; color: var(--accent); text-transform: uppercase; }
 
         @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate { animation: viewIn 0.4s var(--spring) forwards; }
@@ -114,20 +118,27 @@
         const HARD_VERIFIED = ["@treedexe", "@durovspepka"];
         const V_ICON = `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Twitter_Verified_Badge.svg/1280px-Twitter_Verified_Badge.svg.png" class="v-check">`;
 
+        // Ключи базы данных
+        const DB_KEY_SCAMS = 'DELS_V4_SCAMS';
+        const DB_KEY_REPS = 'DELS_V4_REPS';
+        const DB_KEY_VERIFIED = 'DELS_V4_VERIFIED';
+        const DB_KEY_USERS = 'DELS_V4_USERS';
+        const DB_KEY_S_COUNT = 'DELS_V4_S_COUNT';
+
         let db = {
-            scammers: JSON.parse(localStorage.getItem('DELS_PRO_SCAMS')) || [],
-            complaints: JSON.parse(localStorage.getItem('DELS_PRO_REPS')) || [],
-            verified: JSON.parse(localStorage.getItem('DELS_PRO_V')) || [],
-            users: JSON.parse(localStorage.getItem('DELS_PRO_USERS')) || [],
-            totalSearches: JSON.parse(localStorage.getItem('DELS_PRO_S_COUNT')) || 0
+            scammers: JSON.parse(localStorage.getItem(DB_KEY_SCAMS)) || [],
+            complaints: JSON.parse(localStorage.getItem(DB_KEY_REPS)) || [],
+            verified: JSON.parse(localStorage.getItem(DB_KEY_VERIFIED)) || [],
+            users: JSON.parse(localStorage.getItem(DB_KEY_USERS)) || [],
+            totalSearches: JSON.parse(localStorage.getItem(DB_KEY_S_COUNT)) || 0
         };
 
         function sync() {
-            localStorage.setItem('DELS_PRO_SCAMS', JSON.stringify(db.scammers));
-            localStorage.setItem('DELS_PRO_REPS', JSON.stringify(db.complaints));
-            localStorage.setItem('DELS_PRO_V', JSON.stringify(db.verified));
-            localStorage.setItem('DELS_PRO_USERS', JSON.stringify(db.users));
-            localStorage.setItem('DELS_PRO_S_COUNT', JSON.stringify(db.totalSearches));
+            localStorage.setItem(DB_KEY_SCAMS, JSON.stringify(db.scammers));
+            localStorage.setItem(DB_KEY_REPS, JSON.stringify(db.complaints));
+            localStorage.setItem(DB_KEY_VERIFIED, JSON.stringify(db.verified));
+            localStorage.setItem(DB_KEY_USERS, JSON.stringify(db.users));
+            localStorage.setItem(DB_KEY_S_COUNT, JSON.stringify(db.totalSearches));
         }
 
         function isUserVerified(nick) {
@@ -151,6 +162,7 @@
 
         function contactSupport() { window.open(SUPPORT_LINK, '_blank'); }
 
+        // --- ГЛАВНАЯ ---
         function renderHome() {
             setPage(`
                 <div style="text-align:center; margin: 10px 0 25px" class="animate">
@@ -163,16 +175,17 @@
                     </div>
                     <div class="menu-item" onclick="renderReport()">
                         <div class="item-icon"><i data-lucide="shield-alert" size="22"></i></div>
-                        <div class="item-info"><h3>Подать жалобу</h3><p>Сообщите о мошенничестве.</p></div>
+                        <div class="item-info"><h3>Подать жалобу</h3><p>Сообщите о факте мошенничества.</p></div>
                     </div>
                     <div class="menu-item" onclick="renderGarant()">
                         <div class="item-icon" style="color:var(--success)"><i data-lucide="shield-check" size="22"></i></div>
-                        <div class="item-info"><h3>DELS Гарант</h3><p>Безопасное проведение сделок от DelsBase.</p></div>
+                        <div class="item-info"><h3>DELS Гарант</h3><p>Безопасные сделки от DelsBase.</p></div>
                     </div>
                 </div>
             `);
         }
 
+        // --- ПРОФИЛЬ ---
         function renderMyProfile() {
             const isScam = db.scammers.find(s => s.username.toLowerCase() === ME.username.toLowerCase() || s.id === ME.id);
             const isV = isUserVerified(ME.username);
@@ -194,6 +207,7 @@
             `);
         }
 
+        // --- ПОИСК ---
         function renderSearch() {
             setPage(`
                 <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
@@ -224,17 +238,34 @@
                 </div>`;
         }
 
+        // --- АДМИНКА ---
         function renderAdminDashboard() {
             let h = `<div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left"></i> Назад</div><h2>Админ-панель</h2>
             <button class="btn-action" style="background:var(--verified); margin-bottom:12px" onclick="renderAdminVerify()">Выдать верификацию</button>
             <button class="btn-action" style="background:var(--danger); margin-bottom:12px" onclick="renderAdminScamManual()">Добавить в скам-базу</button>
-            <button class="btn-action" style="background:#333; margin-bottom:30px" onclick="renderAdminStats()">Статистика проекта</button>
+            <button class="btn-action" style="background:#333; margin-bottom:20px" onclick="renderAdminStats()">Статистика проекта</button>
             
-            <div class="admin-section"><h4>Жалобы (${db.complaints.length})</h4>`;
-            db.complaints.forEach((c, i) => {
-                h += `<div class="menu-item" style="flex-direction:column; gap:8px"><div><b>${c.from}</b> -> <b>${c.target}</b></div><div style="font-size:12px">${c.text}</div><div style="display:flex; gap:8px; width:100%"><button class="btn-action" style="background:var(--success); padding:10px; font-size:11px" onclick="admAppRep(${i})">БАН</button><button class="btn-action" style="background:rgba(255,255,255,0.05); padding:10px; font-size:11px" onclick="admRejRep(${i})">ОТКАЗ</button></div></div>`;
-            });
-            setPage(h || '<h2>Админ-функционал</h2>');
+            <div class="admin-section">
+                <h4>Жалобы на проверку (${db.complaints.length})</h4>`;
+            
+            if(db.complaints.length === 0) {
+                h += `<p style="color:var(--hint); font-size:13px">Жалоб пока нет</p>`;
+            } else {
+                db.complaints.forEach((c, i) => {
+                    h += `
+                    <div class="menu-item animate" style="flex-direction:column; gap:8px; cursor:default">
+                        <div style="font-size:13px"><b>ОТ:</b> ${c.from} ➔ <b>НА:</b> ${c.target}</div>
+                        <div style="font-size:12px; color:#ccc; line-height:1.4">${c.text}</div>
+                        ${c.photo ? `<img src="${c.photo}" style="width:100%; border-radius:12px; margin-top:5px; border:1px solid var(--border)">` : ''}
+                        <div style="display:flex; gap:8px; width:100%; margin-top:5px">
+                            <button class="btn-action" style="background:var(--success); padding:10px; font-size:11px" onclick="admAppRep(${i})">БАН</button>
+                            <button class="btn-action" style="background:rgba(255,255,255,0.05); padding:10px; font-size:11px" onclick="admRejRep(${i})">ОТКАЗ</button>
+                        </div>
+                    </div>`;
+                });
+            }
+            h += `</div>`;
+            setPage(h);
         }
 
         function renderAdminVerify() {
@@ -265,14 +296,20 @@
                 <div class="stat-grid animate">
                     <div class="stat-box"><b>${db.users.length}</b><span>Пользователей</span></div>
                     <div class="stat-box"><b>${db.totalSearches}</b><span>Запросов</span></div>
-                    <div class="stat-box"><b>${db.scammers.length}</b><span>В базе</span></div>
+                    <div class="stat-box"><b>${db.scammers.length}</b><span>В базе скама</span></div>
                     <div class="stat-box"><b>${db.verified.length + HARD_VERIFIED.length}</b><span>Верифицировано</span></div>
                     <div class="stat-box"><b>${db.complaints.length}</b><span>Активных жалоб</span></div>
                 </div>
             `);
         }
 
-        function admAppRep(i) { const c = db.complaints[i]; db.scammers.push({username:c.target, reason:c.text, id:c.target.replace('@','')}); db.complaints.splice(i, 1); sync(); renderAdminDashboard(); }
+        function admAppRep(i) { 
+            const c = db.complaints[i]; 
+            db.scammers.push({username:c.target, reason:c.text, id:c.target.replace('@','')}); 
+            db.complaints.splice(i, 1); 
+            sync(); 
+            renderAdminDashboard(); 
+        }
         function admRejRep(i) { db.complaints.splice(i, 1); sync(); renderAdminDashboard(); }
 
         // --- ЖАЛОБА ---
@@ -290,12 +327,30 @@
                 <button class="btn-action" onclick="sendReport()">Отправить</button>
             `);
         }
-        function procImg(i) { const f = i.files[0]; if(f) { const r = new FileReader(); r.onload = e => { repPhoto = e.target.result; const p = document.getElementById('previewImage'); p.src = repPhoto; p.style.display="block"; }; r.readAsDataURL(f); } }
+        function procImg(i) { 
+            const f = i.files[0]; 
+            if(f) { 
+                const r = new FileReader(); 
+                r.onload = e => { 
+                    repPhoto = e.target.result; 
+                    const p = document.getElementById('previewImage'); 
+                    p.src = repPhoto; 
+                    p.style.display="block"; 
+                }; 
+                r.readAsDataURL(f); 
+            } 
+        }
         function sendReport() {
             const t = document.getElementById('rTarget').value; const tx = document.getElementById('rText').value;
             if(!isValidTarget(t) || !tx) return;
             db.complaints.push({from: ME.username, target: t, text: tx, photo: repPhoto});
-            sync(); tg.showPopup({title: "Успешно", message: "Жалоба принята! Пожалуйста, ожидайте, проверка займет до 10 минут."}); renderHome();
+            sync(); 
+            tg.showPopup({
+                title: "Успешно", 
+                message: "Жалоба принята! Пожалуйста, ожидайте, проверка займет до 10 минут."
+            }, (btnId) => {
+                renderHome();
+            });
         }
 
         function renderGarant() {
