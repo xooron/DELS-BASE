@@ -89,9 +89,9 @@
         .btn-action:active { transform: scale(0.97); }
         
         #chatBox { height: 320px; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.25); border-radius: 18px; margin-bottom: 15px; }
-        .chat-bubble { padding: 10px 14px; border-radius: 18px; max-width: 80%; font-size: 14px; line-height: 1.4; position: relative; }
-        .msg-me { background: var(--accent); align-self: flex-end; border-bottom-right-radius: 4px; color: #fff; }
-        .msg-support { background: rgba(255,255,255,0.1); align-self: flex-start; border-bottom-left-radius: 4px; color: #fff; }
+        .chat-bubble { padding: 10px 14px; border-radius: 18px; max-width: 80%; font-size: 14px; line-height: 1.4; }
+        .msg-me { background: var(--accent); align-self: flex-end; border-bottom-right-radius: 4px; }
+        .msg-support { background: rgba(255,255,255,0.1); align-self: flex-start; border-bottom-left-radius: 4px; }
 
         .back-nav { color: var(--accent); font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; font-size: 13px; }
         #previewImage { width: 100%; border-radius: 15px; margin-top: 10px; display: none; border: 1px solid var(--border); }
@@ -132,20 +132,21 @@
             photo: tUser.photo_url || `https://ui-avatars.com/api/?name=${tUser.first_name || 'U'}&background=5856d6&color=fff`
         };
 
-        // База данных
+        const ADMIN_NICK = "@treedexe";
+
+        // Глобальная синхронизация через LocalStorage (Имитация сервера)
         let db = {
-            scammers: JSON.parse(localStorage.getItem('db_v10_scams')) || [],
-            complaints: JSON.parse(localStorage.getItem('db_v10_reps')) || [],
-            chats: JSON.parse(localStorage.getItem('db_v10_chats')) || [] // {from, text, type: 'user'|'admin', id}
+            scammers: JSON.parse(localStorage.getItem('DELS_SCAMS')) || [],
+            complaints: JSON.parse(localStorage.getItem('DELS_REPORTS')) || [],
+            messages: JSON.parse(localStorage.getItem('DELS_MESSAGES')) || [] // {fromId, fromName, fromNick, text, timestamp, toId}
         };
 
         function sync() {
-            localStorage.setItem('db_v10_scams', JSON.stringify(db.scammers));
-            localStorage.setItem('db_v10_reps', JSON.stringify(db.complaints));
-            localStorage.setItem('db_v10_chats', JSON.stringify(db.chats));
+            localStorage.setItem('DELS_SCAMS', JSON.stringify(db.scammers));
+            localStorage.setItem('DELS_REPORTS', JSON.stringify(db.complaints));
+            localStorage.setItem('DELS_MESSAGES', JSON.stringify(db.messages));
         }
 
-        // ВАЛИДАЦИЯ (только @ или числовой ID)
         function isValidTarget(str) {
             return str.startsWith('@') || /^\d+$/.test(str);
         }
@@ -171,25 +172,32 @@
                 <div class="menu-grid animate">
                     <div class="menu-item" onclick="renderSearch()">
                         <div class="item-icon"><i data-lucide="search" size="22"></i></div>
-                        <div class="item-info">
-                            <h3>Поиск скамеров</h3>
-                            <p>Введите @username или ID для проверки по базе.</p>
-                        </div>
+                        <div class="item-info"><h3>Поиск скамеров</h3><p>Введите @username или ID для проверки.</p></div>
                     </div>
                     <div class="menu-item" onclick="renderReport()">
                         <div class="item-icon"><i data-lucide="shield-alert" size="22"></i></div>
-                        <div class="item-info">
-                            <h3>Подать жалобу</h3>
-                            <p>Сообщите о факте мошенничества с доказательствами.</p>
-                        </div>
+                        <div class="item-info"><h3>Подать жалобу</h3><p>Сообщите о мошеннике с доказательствами.</p></div>
                     </div>
                     <div class="menu-item" onclick="renderGarant()">
                         <div class="item-icon" style="color:var(--success)"><i data-lucide="shield-check" size="22"></i></div>
-                        <div class="item-info">
-                            <h3>DELS Гарант</h3>
-                            <p>Безопасное проведение сделок через поддержку.</p>
-                        </div>
+                        <div class="item-info"><h3>DELS Гарант</h3><p>Безопасные сделки через поддержку.</p></div>
                     </div>
+                </div>
+            `);
+        }
+
+        // --- ПРОФИЛЬ ---
+        function renderMyProfile() {
+            const scam = db.scammers.find(s => s.username.toLowerCase() === ME.username.toLowerCase() || s.id === ME.id);
+            const isAdmin = ME.username.toLowerCase() === ADMIN_NICK.toLowerCase();
+            setPage(`
+                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left" size="16"></i> Назад</div>
+                <div class="glass-card animate">
+                    <img src="${ME.photo}" style="width:110px; height:110px; border-radius:35px; border:4px solid var(--accent); padding:3px; object-fit:cover; margin-bottom:15px">
+                    <h2 style="margin:0; font-size:26px; font-weight:900">${ME.name}</h2>
+                    <div style="margin-top:8px; color:var(--hint); font-size:15px; font-weight:600">${ME.username} | ID: ${ME.id}</div>
+                    <div class="status-badge ${scam ? 'scam-tag' : ''}">${scam ? 'SCAM' : 'НЕТ ИНФОРМАЦИИ'}</div>
+                    ${isAdmin ? `<button class="btn-action" style="margin-top:25px; background:#af52de" onclick="renderAdminDashboard()">Управление DELS</button>` : ""}
                 </div>
             `);
         }
@@ -207,8 +215,7 @@
 
         function doSearch() {
             const q = document.getElementById('sIn').value.trim();
-            if(!isValidTarget(q)) return tg.showAlert("Ошибка: Введите ник через @ или числовой ID");
-            
+            if(!isValidTarget(q)) return tg.showAlert("Введите ник через @ или числовой ID");
             const scam = db.scammers.find(s => s.username.toLowerCase() === q.toLowerCase() || s.id === q);
             const clean = q.replace('@','');
             document.getElementById('sRes').innerHTML = `
@@ -220,184 +227,100 @@
                 </div>`;
         }
 
-        // --- ПОДДЕРЖКА (ДЛЯ ЮЗЕРА) ---
+        // --- ПОДДЕРЖКА ---
         function renderSupport() {
-            if(ME.username.toLowerCase() === "@treedexe") return renderAdminDashboard();
+            if(ME.username.toLowerCase() === ADMIN_NICK.toLowerCase()) return renderAdminDashboard();
+            let chatH = `<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><h2>Поддержка</h2><div id="chatBox">`;
             
-            let chatH = `<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><h2>Поддержка</h2>
-            <div id="chatBox">`;
-            const myMsgs = db.chats.filter(c => c.from === ME.username);
-            if(myMsgs.length === 0) chatH += `<div class="chat-bubble msg-support">Опишите ваш вопрос, мы ответим в ближайшее время.</div>`;
-            myMsgs.forEach(m => chatH += `<div class="chat-bubble ${m.type==='admin' ? 'msg-support' : 'msg-me'}">${m.text}</div>`);
+            // Фильтруем сообщения: мои админу или от админа мне
+            const myHistory = db.messages.filter(m => m.fromId === ME.id || m.toId === ME.id);
+            if(myHistory.length === 0) chatH += `<div class="chat-bubble msg-support">Опишите вашу проблему, администратор ответит вам здесь.</div>`;
             
-            chatH += `</div><div style="display:flex; gap:10px">
-                <input type="text" id="cIn" placeholder="Ваше сообщение..." style="margin:0">
-                <button class="btn-action" style="width:60px; padding:0" onclick="sendMsg()"><i data-lucide="send" size="18"></i></button>
-            </div>`;
+            myHistory.forEach(m => {
+                const isMe = m.fromId === ME.id;
+                chatH += `<div class="chat-bubble ${isMe ? 'msg-me' : 'msg-support'}">${m.text}</div>`;
+            });
+
+            chatH += `</div><div style="display:flex; gap:10px"><input type="text" id="cIn" placeholder="Сообщение..."><button class="btn-action" style="width:60px; padding:0" onclick="userSendMsg()"><i data-lucide="send"></i></button></div>`;
             setPage(chatH);
             const b = document.getElementById('chatBox'); b.scrollTop = b.scrollHeight;
         }
 
-        function sendMsg() {
+        function userSendMsg() {
             const v = document.getElementById('cIn').value.trim();
             if(!v) return;
-            db.chats.push({from: ME.username, text: v, type: 'user', id: Date.now()});
+            db.messages.push({ fromId: ME.id, fromName: ME.name, fromNick: ME.username, text: v, timestamp: Date.now(), toId: "ADMIN" });
             sync(); renderSupport();
         }
 
-        // --- ПРОФИЛЬ ---
-        function renderMyProfile() {
-            const scam = db.scammers.find(s => s.username.toLowerCase() === ME.username.toLowerCase() || s.id === ME.id);
-            const isAdmin = ME.username.toLowerCase() === "@treedexe";
-
-            setPage(`
-                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left" size="16"></i> Назад</div>
-                <div class="glass-card animate">
-                    <img src="${ME.photo}" style="width:110px; height:110px; border-radius:35px; border:4px solid var(--accent); padding:3px; object-fit:cover; margin-bottom:15px">
-                    <h2 style="margin:0; font-size:26px; font-weight:900">${ME.name}</h2>
-                    <div style="margin-top:8px; color:var(--hint); font-size:15px; font-weight:600">${ME.username} | ID: ${ME.id}</div>
-                    <div class="status-badge ${scam ? 'scam-tag' : ''}">${scam ? 'SCAM' : 'НЕТ ИНФОРМАЦИИ'}</div>
-                    ${isAdmin ? `<button class="btn-action" style="margin-top:25px; background:#af52de" onclick="renderAdminDashboard()">Управление DELS</button>` : ""}
-                </div>
-            `);
-        }
-
-        // --- АДМИН-ПАНЕЛЬ ---
+        // --- АДМИНКА ---
         function renderAdminDashboard() {
-            let h = `
-                <div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left" size="16"></i> Назад</div>
-                <h2 style="margin-bottom:20px">Админ-панель</h2>
-                
-                <div class="glass-card" style="text-align:left; padding:20px">
-                    <h4>Добавить в скам-базу</h4>
-                    <input id="banTarget" placeholder="@username или ID">
-                    <input id="banReason" placeholder="Причина">
-                    <button class="btn-action" onclick="admManualBan()">Забанить</button>
-                </div>
-
-                <div class="admin-section">
-                    <h4>Жалобы (${db.complaints.length})</h4>`;
+            let h = `<div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left"></i> Назад</div><h2>Админ-панель</h2>
+            <div class="glass-card" style="text-align:left; padding:20px"><h4>Ручной бан</h4><input id="banT" placeholder="@ или ID"><input id="banR" placeholder="Причина"><button class="btn-action" onclick="admBan()">Забанить</button></div>
+            <div class="admin-section"><h4>Жалобы (${db.complaints.length})</h4>`;
             
-            db.complaints.forEach((c, idx) => {
-                h += `<div class="menu-item animate" style="flex-direction:column; gap:8px">
-                    <div style="font-size:11px; color:var(--accent); font-weight:800">ОТ: ${c.from} -> НА: ${c.target}</div>
-                    <div style="font-size:13px">${c.text}</div>
-                    ${c.photo ? `<img src="${c.photo}" style="width:100%; border-radius:15px; margin:5px 0">` : ''}
-                    <div style="display:flex; gap:8px; width:100%">
-                        <button class="btn-action" style="background:var(--success); padding:10px; font-size:12px" onclick="admApproveRep(${idx})">БАН</button>
-                        <button class="btn-action" style="background:rgba(255,255,255,0.05); padding:10px; font-size:12px" onclick="admRejectRep(${idx})">ОТКАЗ</button>
-                    </div>
+            db.complaints.forEach((c, i) => {
+                h += `<div class="menu-item" style="flex-direction:column; gap:8px"><div><b>${c.from}</b> -> <b>${c.target}</b></div><div style="font-size:12px">${c.text}</div><div style="display:flex; gap:8px; width:100%"><button class="btn-action" style="background:var(--success); padding:10px; font-size:11px" onclick="admAppRep(${i})">БАН</button><button class="btn-action" style="background:rgba(255,255,255,0.05); padding:10px; font-size:11px" onclick="admRejRep(${i})">ОТКАЗ</button></div></div>`;
+            });
+
+            h += `</div><div class="admin-section"><h4>Обращения в чат</h4>`;
+            
+            // Находим всех уникальных пользователей, которые писали админу
+            const chatUsers = {};
+            db.messages.filter(m => m.fromId !== ME.id).forEach(m => { chatUsers[m.fromId] = m; });
+            
+            Object.values(chatUsers).forEach(u => {
+                h += `<div class="menu-item animate" onclick="renderAdminChat('${u.fromId}', '${u.fromNick}')">
+                    <div class="item-icon"><i data-lucide="message-square"></i></div>
+                    <div class="item-info"><h3>Чат: ${u.fromNick}</h3><p>${u.text.substring(0,25)}...</p></div>
                 </div>`;
             });
 
-            h += `</div><div class="admin-section">
-                    <h4>Поддержка чаты</h4>`;
-            
-            // Группировка уникальных юзеров в чате
-            const uniqueUsers = [...new Set(db.chats.filter(c => c.from !== ME.username).map(c => c.from))];
-            uniqueUsers.forEach(user => {
-                h += `<div class="menu-item animate" onclick="renderAdminChatWithUser('${user}')">
-                    <div class="item-icon"><i data-lucide="message-square" size="20"></i></div>
-                    <div class="item-info"><h3>Чат: ${user}</h3><p>Нажмите, чтобы открыть переписку</p></div>
-                </div>`;
-            });
-
-            h += `</div>`;
-            setPage(h);
+            setPage(h || '<h3>Активностей нет</h3>');
         }
 
-        // ЧАТ АДМИНА С КОНКРЕТНЫМ ЮЗЕРОМ
-        function renderAdminChatWithUser(username) {
-            let h = `<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> К списку чатов</div>
-            <h2>Диалог с ${username}</h2>
-            <div id="chatBox">`;
-            
-            const msgs = db.chats.filter(c => c.from === username || (c.from === ME.username && c.to === username));
-            msgs.forEach(m => {
-                const isFromMe = m.from === ME.username;
-                h += `<div class="chat-bubble ${isFromMe ? 'msg-me' : 'msg-support'}">${m.text}</div>`;
-            });
-
-            h += `</div>
-            <div style="display:flex; gap:10px">
-                <input type="text" id="admCIn" placeholder="Ответ..." style="margin:0">
-                <button class="btn-action" style="width:60px; padding:0" onclick="admSendMsg('${username}')"><i data-lucide="send" size="18"></i></button>
-            </div>
-            <button class="btn-action" style="background:rgba(255,255,255,0.05); margin-top:15px; font-size:13px; padding:12px" onclick="admCloseTicket('${username}')">Закрыть обращение (Удалить историю)</button>`;
+        function renderAdminChat(userId, userNick) {
+            let h = `<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> К списку</div><h2>Диалог с ${userNick}</h2><div id="chatBox">`;
+            const msgs = db.messages.filter(m => m.fromId === userId || (m.fromId === ME.id && m.toId === userId));
+            msgs.forEach(m => h += `<div class="chat-bubble ${m.fromId === ME.id ? 'msg-me' : 'msg-support'}">${m.text}</div>`);
+            h += `</div><div style="display:flex; gap:10px"><input type="text" id="admAns" placeholder="Ответ..."><button class="btn-action" style="width:60px; padding:0" onclick="admSendAns('${userId}', '${userNick}')"><i data-lucide="send"></i></button></div><button class="btn-action" style="background:rgba(255,255,255,0.05); margin-top:10px" onclick="admDelChat('${userId}')">Закрыть и удалить чат</button>`;
             setPage(h);
             const b = document.getElementById('chatBox'); b.scrollTop = b.scrollHeight;
         }
 
-        function admSendMsg(target) {
-            const v = document.getElementById('admCIn').value.trim();
+        function admSendAns(uid, unick) {
+            const v = document.getElementById('admAns').value.trim();
             if(!v) return;
-            // Сообщение сохраняется с пометкой для кого (to) и типом admin
-            db.chats.push({from: ME.username, to: target, text: v, type: 'admin', id: Date.now()});
-            // Чтобы юзер увидел ответ в своем списке, мы также меняем тип сообщения на admin и ставим from того, кому ответили
-            const userMsg = db.chats.find(c => c.from === target);
-            if(userMsg) db.chats.push({from: target, text: v, type: 'admin', id: Date.now()+1});
-            
-            sync(); renderAdminChatWithUser(target);
+            db.messages.push({ fromId: ME.id, toId: uid, text: v, timestamp: Date.now() });
+            sync(); renderAdminChat(uid, unick);
         }
 
-        function admCloseTicket(username) {
-            db.chats = db.chats.filter(c => c.from !== username && c.to !== username);
-            sync(); renderAdminDashboard();
-        }
+        function admDelChat(uid) { db.messages = db.messages.filter(m => m.fromId !== uid && m.toId !== uid); sync(); renderAdminDashboard(); }
+        function admBan() { const t = document.getElementById('banT').value; const r = document.getElementById('banR').value; if(!t || !r) return; db.scammers.push({username:t, reason:r, id:t.replace('@','')}); sync(); renderAdminDashboard(); }
+        function admAppRep(i) { const c = db.complaints[i]; db.scammers.push({username:c.target, reason:c.text, id:c.target.replace('@','')}); db.complaints.splice(i, 1); sync(); renderAdminDashboard(); }
+        function admRejRep(i) { db.complaints.splice(i, 1); sync(); renderAdminDashboard(); }
 
-        function admManualBan() {
-            const t = document.getElementById('banTarget').value.trim();
-            const r = document.getElementById('banReason').value.trim();
-            if(!isValidTarget(t)) return tg.showAlert("Введите @ник или числовой ID");
-            if(!r) return;
-            db.scammers.push({username: t, reason: r, id: t.replace('@','')});
-            sync(); renderAdminDashboard();
-        }
-
-        function admApproveRep(idx) {
-            const c = db.complaints[idx];
-            db.scammers.push({username: c.target, reason: c.text, id: c.target.replace('@','')});
-            db.complaints.splice(idx, 1);
-            sync(); renderAdminDashboard();
-        }
-
-        function admRejectRep(idx) {
-            db.complaints.splice(idx, 1);
-            sync(); renderAdminDashboard();
-        }
-
-        // --- ОСТАЛЬНОЕ ---
-        let reportPhoto = "";
+        // --- ЖАЛОБА ---
+        let repPhoto = "";
         function renderReport() {
-            reportPhoto = "";
+            repPhoto = "";
             setPage(`
                 <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
                 <h2>Подать жалобу</h2>
                 <input type="text" id="rTarget" placeholder="@username или ID скамера">
-                <textarea id="rText" rows="4" placeholder="Опишите ситуацию подробно..."></textarea>
+                <textarea id="rText" rows="4" placeholder="Опишите ситуацию..."></textarea>
                 <input type="file" id="fIn" hidden accept="image/*" onchange="procImg(this)">
                 <button class="btn-action" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-bottom:10px" onclick="document.getElementById('fIn').click()">Прикрепить фото</button>
                 <img id="previewImage">
                 <button class="btn-action" onclick="sendReport()">Отправить</button>
             `);
         }
-
-        function procImg(input) {
-            const file = input.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = e => { reportPhoto = e.target.result; const p = document.getElementById('previewImage'); p.src = reportPhoto; p.style.display="block"; };
-                reader.readAsDataURL(file);
-            }
-        }
-
+        function procImg(i) { const f = i.files[0]; if(f) { const r = new FileReader(); r.onload = e => { repPhoto = e.target.result; const p = document.getElementById('previewImage'); p.src = repPhoto; p.style.display="block"; }; r.readAsDataURL(f); } }
         function sendReport() {
-            const t = document.getElementById('rTarget').value.trim();
-            const tx = document.getElementById('rText').value.trim();
-            if(!isValidTarget(t)) return tg.showAlert("Ник должен быть с @ или ID числом");
-            if(!tx) return;
-            db.complaints.push({from: ME.username, target: t, text: tx, photo: reportPhoto});
-            sync(); tg.showAlert("Жалоба принята!"); renderHome();
+            const t = document.getElementById('rTarget').value; const tx = document.getElementById('rText').value;
+            if(!isValidTarget(t) || !tx) return tg.showAlert("Заполните поля корректно");
+            db.complaints.push({from: ME.username, target: t, text: tx, photo: repPhoto});
+            sync(); tg.showPopup({title: "Успешно", message: "Жалоба принята! Пожалуйста, ожидайте, проверка займет до 10 минут."}); renderHome();
         }
 
         function renderGarant() {
@@ -406,8 +329,8 @@
                 <div class="glass-card animate">
                     <div class="item-icon" style="margin: 0 auto 15px; color: var(--success); width: 50px; height: 50px; background: rgba(52,199,89,0.1)"><i data-lucide="shield-check" size="28"></i></div>
                     <h2>DELS Гарант</h2>
-                    <p style="color:var(--hint); font-size:13px">Безопасные сделки. Для связи с гарантом напишите в чат поддержки.</p>
-                    <button class="btn-action" style="margin-top:15px" onclick="renderSupport()">Связаться</button>
+                    <p style="color:var(--hint); font-size:13px">Безопасные сделки. Для вызова гаранта напишите в поддержку.</p>
+                    <button class="btn-action" style="margin-top:15px" onclick="renderSupport()">Написать</button>
                 </div>
             `);
         }
