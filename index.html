@@ -4,32 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DELS BASE GLOBAL</title>
-    <!-- SDK -->
+    <!-- Подключение библиотек -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg: #000000;
-            --panel: rgba(24, 24, 27, 0.85);
-            --accent: #5856d6;
-            --text: #ffffff;
-            --hint: #a1a1aa;
-            --danger: #ff3b30;
-            --success: #34c759;
-            --verified: #00a2ed;
-            --border: rgba(255, 255, 255, 0.1);
+            --bg: #000000; --panel: rgba(24, 24, 27, 0.85); --accent: #5856d6;
+            --text: #ffffff; --hint: #a1a1aa; --danger: #ff3b30;
+            --success: #34c759; --verified: #00a2ed; --border: rgba(255, 255, 255, 0.1);
+            --spring: cubic-bezier(0.4, 0, 0.2, 1);
         }
-
         ::-webkit-scrollbar { display: none; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { margin: 0; font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
+        /* Анимированный фон */
         .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% 50%, #0a0a0c 0%, #000 100%); }
         .blob { position: absolute; width: 300px; height: 300px; background: var(--accent); filter: blur(90px); border-radius: 50%; opacity: 0.12; animation: move 20s infinite alternate; }
         @keyframes move { from { transform: translate(-20%, -20%); } to { transform: translate(30%, 20%); } }
 
+        /* Header */
         header { height: 70px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(25px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border); }
         .logo { font-size: 19px; font-weight: 900; text-transform: uppercase; cursor: pointer; }
         .logo span { color: var(--accent); }
@@ -37,9 +33,11 @@
         .profile-pill { display: flex; align-items: center; gap: 10px; padding: 5px 5px 5px 12px; border-radius: 50px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); cursor: pointer; }
         .profile-pill img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--accent); }
 
-        #dropdownMenu { position: absolute; top: 80px; right: 20px; width: 190px; background: var(--panel); border: 1px solid var(--border); border-radius: 22px; backdrop-filter: blur(25px); display: none; flex-direction: column; overflow: hidden; z-index: 1001; }
+        #dropdownMenu { position: absolute; top: 80px; right: 20px; width: 195px; background: var(--panel); border: 1px solid var(--border); border-radius: 22px; backdrop-filter: blur(25px); display: none; flex-direction: column; overflow: hidden; z-index: 1001; }
         .menu-link { padding: 16px 20px; font-size: 14px; font-weight: 700; color: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .menu-link:active { background: rgba(255,255,255,0.1); }
 
+        /* Контент */
         main { padding: 16px; max-width: 500px; margin: 0 auto; }
         .menu-item { background: var(--panel); padding: 18px 20px; border-radius: 24px; display: flex; align-items: flex-start; gap: 18px; margin-bottom: 12px; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
         .item-icon { width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); color: var(--accent); flex-shrink: 0; }
@@ -48,6 +46,7 @@
 
         .glass-card { background: var(--panel); border-radius: 30px; padding: 35px 20px; border: 1px solid var(--border); text-align: center; }
         
+        /* Бейджи */
         .status-badge { font-size: 11px; font-weight: 900; padding: 10px 24px; border-radius: 100px; text-transform: uppercase; margin-top: 15px; display: inline-block; background: rgba(255,255,255,0.05); color: var(--hint); border: 1px solid var(--border); }
         .scam-tag { background: var(--danger); color: #fff; border: none; }
         .verified-tag { background: rgba(0, 162, 237, 0.15); color: var(--verified); border: 1px solid rgba(0, 162, 237, 0.3); }
@@ -56,18 +55,24 @@
 
         input, textarea { width: 100%; background: rgba(24, 24, 27, 0.6); border: 1px solid var(--border); padding: 16px; border-radius: 18px; color: #fff; font-size: 15px; margin-bottom: 10px; }
         .btn-action { background: var(--accent); color: #fff; border: none; width: 100%; padding: 18px; border-radius: 20px; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.2s; }
+        .btn-action:active { transform: scale(0.98); opacity: 0.9; }
         
         .back-nav { color: var(--accent); font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; font-size: 13px; }
         
+        /* Статистика */
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .stat-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 18px; padding: 15px; text-align: center; }
-        .stat-box b { font-size: 22px; display: block; color: var(--accent); }
-        .stat-box span { font-size: 10px; color: var(--hint); font-weight: 700; }
+        .stat-box b { font-size: 22px; display: block; color: var(--accent); transition: 0.3s; }
+        .stat-box span { font-size: 10px; color: var(--hint); text-transform: uppercase; font-weight: 700; }
 
-        #previewImage { max-width: 120px; max-height: 120px; border-radius: 12px; margin: 10px auto; display: none; border: 1px solid var(--border); object-fit: cover; }
+        /* Превью фото */
+        #previewImage { max-width: 140px; max-height: 140px; border-radius: 12px; margin: 10px auto; display: none; border: 1px solid var(--border); object-fit: cover; }
+
+        .admin-section { text-align: left; margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .admin-section h4 { margin: 0 0 12px 0; font-size: 13px; color: var(--accent); text-transform: uppercase; }
 
         @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate { animation: viewIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .animate { animation: viewIn 0.4s var(--spring) forwards; }
     </style>
 </head>
 <body>
@@ -88,10 +93,10 @@
     <main id="app"></main>
 
     <script>
-        // --- КОНФИГУРАЦИЯ SUPABASE ---
+        // --- ДАННЫЕ SUPABASE ---
         const SUPABASE_URL = 'https://hrixnvenlcsskysijabq.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_UopsF6xZ16MKgPjmhxFSlA_gtYcX7sa';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const tg = window.Telegram.WebApp;
         tg.expand();
@@ -104,15 +109,15 @@
             photo: tUser.photo_url || `https://ui-avatars.com/api/?name=${tUser.first_name || 'U'}&background=5856d6&color=fff`
         };
 
-        const ADMIN_NICK = "@treedexe";
+        const VERIFIED_NICKNAMES = ["@treedexe", "@durovspepka"];
         const V_ICON = `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Twitter_Verified_Badge.svg/1280px-Twitter_Verified_Badge.svg.png" class="v-check">`;
         
-        let statsInterval = null;
+        let statsTimer = null;
 
         function isValidTarget(str) { return str && (str.startsWith('@') || /^\d+$/.test(str)); }
 
         function setPage(html) {
-            if(statsInterval) clearInterval(statsInterval);
+            if(statsTimer) clearInterval(statsTimer);
             const app = document.getElementById('app');
             app.innerHTML = html;
             lucide.createIcons();
@@ -135,7 +140,7 @@
                 <div class="menu-grid animate">
                     <div class="menu-item" onclick="renderSearch()">
                         <div class="item-icon"><i data-lucide="search" size="22"></i></div>
-                        <div class="item-info"><h3>Поиск скамеров</h3><p>Проверьте репутацию по базе.</p></div>
+                        <div class="item-info"><h3>Поиск скамеров</h3><p>Проверка контрагента по базе DelsBase.</p></div>
                     </div>
                     <div class="menu-item" onclick="renderReport()">
                         <div class="item-icon"><i data-lucide="shield-alert" size="22"></i></div>
@@ -143,39 +148,43 @@
                     </div>
                     <div class="menu-item" onclick="renderGarant()">
                         <div class="item-icon" style="color:var(--success)"><i data-lucide="shield-check" size="22"></i></div>
-                        <div class="item-info"><h3>DELS Гарант</h3><p>Безопасные сделки от DelsBase.</p></div>
+                        <div class="item-info"><h3>DELS Гарант</h3><p>Безопасные сделки от нашего сервиса.</p></div>
                     </div>
                 </div>
             `);
         }
 
-        // --- ПОИСК (С АВАТАРКОЙ) ---
+        // --- ПОИСК ---
         async function doSearch() {
             const q = document.getElementById('sIn').value.trim();
             if(!isValidTarget(q)) return tg.showAlert("Введите ник через @ или числовой ID");
-
-            // Ищем в базе скамеров
-            const { data: scamData } = await supabase.from('scammers').select('*').or(`username.eq.${q.toLowerCase()},id_tg.eq.${q}`);
-            const scam = scamData && scamData.length > 0 ? scamData[0] : null;
-
-            // Ищем верификацию
-            const { data: vData } = await supabase.from('verified_users').select('*').eq('username', q.toLowerCase());
-            const verified = (vData && vData.length > 0) || ["@treedexe", "@durovspepka"].includes(q.toLowerCase());
-
-            const clean = q.replace('@','');
             
-            document.getElementById('sRes').innerHTML = `
-                <div class="glass-card animate" style="margin-top:20px; border-color:${scam ? 'var(--danger)' : 'var(--border)'}">
-                    <img src="https://ui-avatars.com/api/?name=${clean}&background=${scam ? 'ff3b30' : (verified ? '00a2ed' : '333')}&color=fff" style="width:80px; height:80px; border-radius:25px; margin-bottom:12px">
-                    <h3 style="margin:0">${q}${verified ? V_ICON : ''}</h3>
-                    <div class="status-badge ${scam ? 'scam-tag' : (verified ? 'verified-tag' : '')}">${scam ? 'SCAM' : (verified ? 'ВЕРИФИЦИРОВАН' : 'НЕТ ИНФОРМАЦИИ')}</div>
-                    ${scam ? `<p style="font-size:13px; color:#ccc; margin-top:10px">${scam.reason}</p>` : ''}
-                </div>`;
+            document.getElementById('sRes').innerHTML = '<p style="text-align:center; margin-top:20px; opacity:0.6">Ищем в глобальной базе...</p>';
+            
+            try {
+                // Обновляем общий счетчик поиска
+                localStorage.setItem('DELS_TOTAL_S', (Number(localStorage.getItem('DELS_TOTAL_S')) || 0) + 1);
+
+                const { data: scamData } = await supabaseClient.from('scammers').select('*').or(`username.eq.${q.toLowerCase()},id_tg.eq.${q}`);
+                const { data: vData } = await supabaseClient.from('verified_users').select('*').eq('username', q.toLowerCase());
+
+                const isScam = scamData && scamData.length > 0;
+                const isV = (vData && vData.length > 0) || VERIFIED_NICKNAMES.includes(q.toLowerCase());
+                const clean = q.replace('@','');
+
+                document.getElementById('sRes').innerHTML = `
+                    <div class="glass-card animate" style="margin-top:20px; border-color:${isScam ? 'var(--danger)' : 'var(--border)'}">
+                        <img src="https://ui-avatars.com/api/?name=${clean}&background=${isScam ? 'ff3b30' : (isV ? '00a2ed' : '333')}&color=fff" style="width:80px; height:80px; border-radius:25px; margin-bottom:12px">
+                        <h3 style="margin:0">${q}${isV ? V_ICON : ''}</h3>
+                        <div class="status-badge ${isScam ? 'scam-tag' : (isV ? 'verified-tag' : '')}">${isScam ? 'SCAM' : (isV ? 'ВЕРИФИЦИРОВАН' : 'НЕТ ИНФОРМАЦИИ')}</div>
+                        ${isScam ? `<p style="font-size:13px; color:#ccc; margin-top:10px">${scamData[0].reason}</p>` : ''}
+                    </div>`;
+            } catch (e) { tg.showAlert("Ошибка связи с Supabase"); }
         }
 
         function renderSearch() {
             setPage(`
-                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
+                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left" size="16"></i> Назад</div>
                 <h2>Поиск профиля</h2>
                 <input type="text" id="sIn" placeholder="@username или ID">
                 <button class="btn-action" onclick="doSearch()">Проверить</button>
@@ -183,19 +192,19 @@
             `);
         }
 
-        // --- ПОДАЧА ЖАЛОБЫ (В ОБЛАКО) ---
-        let repPhoto = "";
+        // --- ЖАЛОБА ---
+        let reportPhoto = "";
         function renderReport() {
-            repPhoto = "";
+            reportPhoto = "";
             setPage(`
-                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
+                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left" size="16"></i> Назад</div>
                 <h2>Подать жалобу</h2>
-                <input type="text" id="rTarget" placeholder="@username или ID скамера">
-                <textarea id="rText" rows="4" placeholder="Суть жалобы..."></textarea>
+                <input type="text" id="rT" placeholder="@username или ID скамера">
+                <textarea id="rTxt" rows="4" placeholder="Опишите ситуацию подробно..."></textarea>
                 <input type="file" id="fIn" hidden accept="image/*" onchange="procImg(this)">
                 <button class="btn-action" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-bottom:10px" onclick="document.getElementById('fIn').click()">Прикрепить фото</button>
                 <div style="display:flex; justify-content:center"><img id="previewImage"></div>
-                <button class="btn-action" onclick="sendReport()">Отправить</button>
+                <button class="btn-action" onclick="sendRep()">Отправить</button>
             `);
         }
 
@@ -203,96 +212,85 @@
             const f = i.files[0];
             if(f) {
                 const r = new FileReader();
-                r.onload = e => { repPhoto = e.target.result; const p = document.getElementById('previewImage'); p.src = repPhoto; p.style.display="block"; };
+                r.onload = e => { reportPhoto = e.target.result; const p = document.getElementById('previewImage'); p.src = reportPhoto; p.style.display="block"; };
                 r.readAsDataURL(f);
             }
         }
 
-        async function sendReport() {
-            const t = document.getElementById('rTarget').value; const tx = document.getElementById('rText').value;
+        async function sendRep() {
+            const t = document.getElementById('rT').value; const tx = document.getElementById('rTxt').value;
             if(!isValidTarget(t) || !tx) return;
-            
-            await supabase.from('complaints').insert([{ from_user: ME.username, target: t, text: tx, photo: repPhoto }]);
-            
-            tg.showPopup({ title: "Успешно", message: "Жалоба принята! Проверка займет до 10 минут." }, () => renderHome());
+            try {
+                await supabaseClient.from('complaints').insert([{ from_user: ME.username, target: t, text: tx, photo: reportPhoto }]);
+                tg.showPopup({ title: "Успешно", message: "Жалоба принята! Проверка займет до 10 минут." }, () => renderHome());
+            } catch (e) { tg.showAlert("Ошибка отправки в Supabase"); }
         }
 
-        // --- АДМИНКА И СТАТИСТИКА ---
-        async function renderAdminDashboard() {
-            const { data: reps } = await supabase.from('complaints').select('*');
-            let h = `<div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left"></i> Назад</div><h2>Админ-панель</h2>
-            <button class="btn-action" style="background:var(--verified); margin-bottom:12px" onclick="renderAdminVerify()">Выдать верификацию</button>
-            <button class="btn-action" style="background:var(--danger); margin-bottom:12px" onclick="renderAdminScamManual()">Добавить в скам-базу</button>
-            <button class="btn-action" style="background:#333; margin-bottom:20px" onclick="renderAdminStats()">Статистика проекта</button>
-            <div class="admin-section"><h4>Жалобы (${reps ? reps.length : 0})</h4></div>`;
-            
-            reps?.forEach((c) => {
-                h += `<div class="menu-item" style="flex-direction:column; gap:8px"><div><b>${c.from_user}</b> ➔ <b>${c.target}</b></div><div style="font-size:12px; color:#ccc">${c.text}</div>${c.photo ? `<img src="${c.photo}" style="width:100px; border-radius:10px; margin-top:5px; border:1px solid var(--border)">` : ''}</div>`;
-            });
-            setPage(h);
-        }
-
-        async function renderAdminStats() {
-            setPage(`
-                <div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div>
-                <h2>Статистика Real-Time</h2>
-                <div class="stat-grid">
-                    <div class="stat-box"><b id="st-users">...</b><span>Пользователей</span></div>
-                    <div class="stat-box"><b id="st-scams">...</b><span>База скама</span></div>
-                    <div class="stat-box"><b id="st-reps">...</b><span>Активных жалоб</span></div>
-                    <div class="stat-box"><b id="st-v">...</b><span>Верифицировано</span></div>
-                </div>`);
-            updateLive();
-            statsInterval = setInterval(updateLive, 2000);
-        }
-
-        async function updateLive() {
-            const { count: users } = await supabase.from('users_list').select('*', { count: 'exact', head: true });
-            const { count: scams } = await supabase.from('scammers').select('*', { count: 'exact', head: true });
-            const { count: reps } = await supabase.from('complaints').select('*', { count: 'exact', head: true });
-            const { count: veds } = await supabase.from('verified_users').select('*', { count: 'exact', head: true });
-
-            if(document.getElementById('st-users')) {
-                document.getElementById('st-users').innerText = users || 0;
-                document.getElementById('st-scams').innerText = scams || 0;
-                document.getElementById('st-reps').innerText = reps || 0;
-                document.getElementById('st-v').innerText = (veds || 0) + 2;
-            }
-        }
-
-        // Вспомогательные админ-функции
-        function renderAdminVerify() { setPage(`<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div><h2>Верификация</h2><input type="text" id="vT" placeholder="@username"><button class="btn-action" onclick="admGiveV()">Выдать</button>`); }
-        async function admGiveV() { await supabase.from('verified_users').insert([{username: document.getElementById('vT').value.toLowerCase()}]); renderAdminDashboard(); }
-        function renderAdminScamManual() { setPage(`<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div><h2>Ручной бан</h2><input type="text" id="sT" placeholder="@username или ID"><textarea id="sR" placeholder="Причина..."></textarea><button class="btn-action" onclick="admAddScam()">Забанить</button>`); }
-        async function admAddScam() { await supabase.from('scammers').insert([{username: document.getElementById('sT').value, reason: document.getElementById('sR').value}]); renderAdminDashboard(); }
-
-        // Профиль
+        // --- ПРОФИЛЬ ---
         async function renderMyProfile() {
-            const { data: scamData } = await supabase.from('scammers').select('*').or(`username.eq.${ME.username.toLowerCase()},id_tg.eq.${ME.id}`);
-            const isScam = scamData && scamData.length > 0;
-            const { data: vData } = await supabase.from('verified_users').select('*').eq('username', ME.username.toLowerCase());
-            const isV = (vData && vData.length > 0) || ["@treedexe", "@durovspepka"].includes(ME.username.toLowerCase());
-            const isAdmin = ME.username.toLowerCase() === ADMIN_NICK.toLowerCase();
-
+            const isV = VERIFIED_NICKNAMES.includes(ME.username.toLowerCase());
+            const isAdmin = ME.username.toLowerCase() === "@treedexe";
+            
             setPage(`
-                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
+                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left" size="16"></i> Назад</div>
                 <div class="glass-card animate">
                     <img src="${ME.photo}" style="width:110px; height:110px; border-radius:35px; border:4px solid var(--accent); padding:3px; object-fit:cover; margin-bottom:15px">
                     <h2 style="margin:0; font-size:26px; font-weight:900">${ME.name}${isV ? V_ICON : ''}</h2>
                     <div style="margin-top:8px; color:var(--hint); font-size:15px; font-weight:600">${ME.username} | ID: ${ME.id}</div>
-                    <div class="status-badge ${isScam ? 'scam-tag' : (isV ? 'verified-tag' : '')}">${isScam ? 'SCAM' : (isV ? 'ВЕРИФИЦИРОВАН' : 'НЕТ ИНФОРМАЦИИ')}</div>
-                    ${isAdmin ? `<button class="btn-action" style="margin-top:25px; background:#af52de" onclick="renderAdminDashboard()">Управление DELS</button>` : ""}
+                    <div class="status-badge ${isV ? 'verified-tag' : ''}">${isV ? 'ВЕРИФИЦИРОВАН' : 'НЕТ ИНФОРМАЦИИ'}</div>
+                    ${isAdmin ? `<button class="btn-action" style="margin-top:25px; background:#af52de" onclick="renderAdminDashboard()">Управление</button>` : ""}
+                </div>
+            `);
+        }
+
+        // --- АДМИНКА ---
+        async function renderAdminDashboard() {
+            const { data: reps } = await supabaseClient.from('complaints').select('*');
+            let h = `<div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left"></i> Назад</div><h2>Админ-панель</h2>
+            <button class="btn-action" style="background:#333; margin-bottom:20px" onclick="renderAdminStats()">Статистика Real-Time</button>
+            <div class="admin-section"><h4>Жалобы от юзеров (${reps?.length || 0})</h4></div>`;
+            
+            reps?.forEach((c) => {
+                h += `<div class="menu-item animate" style="flex-direction:column; gap:8px"><div><b>${c.from_user}</b> ➔ <b>${c.target}</b></div><div style="font-size:12px; color:#ccc">${c.text}</div>${c.photo ? `<img src="${c.photo}" style="width:100px; border-radius:10px; margin-top:5px; border:1px solid var(--border)">` : ''}</div>`;
+            });
+            setPage(h || '<h2>Жалоб нет</h2>');
+        }
+
+        function renderAdminStats() {
+            setPage(`
+                <div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div>
+                <h2>Статистика проекта</h2>
+                <div class="stat-grid animate">
+                    <div class="stat-box"><b id="st-u">0</b><span>Пользователей</span></div>
+                    <div class="stat-box"><b id="st-s">0</b><span>Поисков</span></div>
+                    <div class="stat-box"><b id="st-sc">0</b><span>В базе скама</span></div>
+                    <div class="stat-box"><b id="st-r">0</b><span>Жалоб</span></div>
                 </div>`);
+            updateStats();
+            statsTimer = setInterval(updateStats, 1000);
+        }
+
+        async function updateStats() {
+            const { count: uCount } = await supabaseClient.from('users_list').select('*', { count: 'exact', head: true });
+            const { count: sCount } = await supabaseClient.from('scammers').select('*', { count: 'exact', head: true });
+            const { count: rCount } = await supabaseClient.from('complaints').select('*', { count: 'exact', head: true });
+            
+            if(document.getElementById('st-u')) {
+                document.getElementById('st-u').innerText = uCount || 0;
+                document.getElementById('st-s').innerText = localStorage.getItem('DELS_TOTAL_S') || 0;
+                document.getElementById('st-sc').innerText = sCount || 0;
+                document.getElementById('st-r').innerText = rCount || 0;
+            }
         }
 
         function renderGarant() { setPage(`<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><div class="glass-card animate"><div class="item-icon" style="margin: 0 auto 15px; color: var(--success); width: 50px; height: 50px; background: rgba(52,199,89,0.1)"><i data-lucide="shield-check" size="28"></i></div><h2>DELS Гарант</h2><p style="color:var(--hint); font-size:13px">Безопасные сделки. Для вызова гаранта нажмите ниже.</p><button class="btn-action" style="margin-top:15px" onclick="contactSupport()">Связаться</button></div>`); }
 
         window.onload = async () => {
-            // Регистрируем пользователя в глобальном списке
-            await supabase.from('users_list').upsert([{ user_id: ME.id }]);
             document.getElementById('hName').innerText = ME.username;
             document.getElementById('hImg').src = ME.photo;
             renderHome();
+            // Регистрируем вход юзера
+            try { await supabaseClient.from('users_list').upsert([{ user_id: ME.id }]); } catch (e) {}
         };
     </script>
 </body>
