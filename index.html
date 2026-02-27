@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DELS BASE | Security System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --panel: rgba(28, 28, 30, 0.8);
+            --accent: #5856d6;
+            --accent-glow: rgba(88, 86, 214, 0.4);
+            --text: #ffffff;
+            --hint: #8e8e93;
+            --danger: #ff3b30;
+            --danger-glow: rgba(255, 59, 48, 0.4);
+            --success: #34c759;
+            --border: rgba(255, 255, 255, 0.1);
+            --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        ::-webkit-scrollbar { display: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Animations --- */
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); filter: blur(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+        }
+
+        @keyframes badgeGlow {
+            0% { box-shadow: 0 0 5px var(--danger-glow); }
+            50% { box-shadow: 0 0 15px var(--danger); }
+            100% { box-shadow: 0 0 5px var(--danger-glow); }
+        }
+
+        .animate { animation: scaleIn 0.5s var(--spring) forwards; }
+
+        /* --- Header --- */
+        header {
+            height: 70px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 1000;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; cursor: pointer; }
+        .logo span { color: var(--accent); }
+
+        .profile-trigger {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 4px 4px 4px 12px;
+            border-radius: 50px;
+            background: #1c1c1e;
+            border: 1px solid var(--border);
+            transition: 0.3s;
+        }
+        .profile-trigger:active { transform: scale(0.95); background: #2c2c2e; }
+        .profile-trigger img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--accent); }
+
+        /* --- Main Content --- */
+        main { padding: 20px; max-width: 500px; margin: 0 auto; }
+
+        .menu-card {
+            background: var(--panel);
+            padding: 24px;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            transition: 0.3s var(--spring);
+        }
+        .menu-card:active { transform: scale(0.97); }
+
+        .icon-box {
+            width: 54px; height: 54px; border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.03);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        /* --- Profile Card / Result --- */
+        .glass-card {
+            background: var(--panel);
+            border-radius: 35px;
+            padding: 35px;
+            border: 1px solid var(--border);
+            text-align: center;
+            backdrop-filter: blur(20px);
+            position: relative;
+        }
+
+        .scam-badge {
+            background: var(--danger);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-left: 8px;
+            vertical-align: middle;
+            display: inline-block;
+            animation: badgeGlow 1.5s infinite;
+        }
+
+        .search-stat {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(88, 86, 214, 0.1);
+            padding: 4px 12px;
+            border-radius: 8px;
+        }
+
+        .status-box {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: left;
+        }
+        .status-box.scam { background: rgba(255, 59, 48, 0.1); color: var(--danger); border: 1px solid rgba(255, 59, 48, 0.2); }
+        .status-box.safe { background: rgba(52, 199, 89, 0.1); color: var(--success); border: 1px solid rgba(52, 199, 89, 0.2); }
+
+        /* --- Forms --- */
+        input, textarea {
+            width: 100%; background: #1c1c1e; border: 1px solid var(--border);
+            padding: 18px; border-radius: 20px; color: #fff; font-size: 16px; margin-bottom: 15px;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); background: #2c2c2e; }
+
+        .btn-main {
+            background: var(--accent); color: #fff; border: none; width: 100%;
+            padding: 20px; border-radius: 22px; font-weight: 800; font-size: 16px;
+            cursor: pointer; transition: 0.3s;
+        }
+        .btn-main:active { transform: scale(0.96); opacity: 0.8; }
+
+        .btn-back { background: none; border: none; color: var(--accent); font-weight: 800; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; }
+
+        /* --- Admin --- */
+        .admin-item { background: #1c1c1e; padding: 20px; border-radius: 22px; margin-bottom: 12px; border: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" onclick="renderHome()">DELS<span>BASE</span></div>
+        <div class="profile-trigger" onclick="renderProfile()">
+            <span id="headNick">@username</span>
+            <img id="headAva" src="https://ui-avatars.com/api/?name=U&background=5856d6&color=fff">
+        </div>
+    </header>
+
+    <main id="app" class="animate"></main>
+
+    <script>
+        // ДАННЫЕ
+        const ME = { username: "@treedexe", id: "500400300" };
+
+        let db = {
+            scammers: JSON.parse(localStorage.getItem('d_scam_v5')) || [
+                { username: "@scammer", reason: "Обман при продаже скинов", id: "112233" }
+            ],
+            complaints: JSON.parse(localStorage.getItem('d_comp_v5')) || [],
+            searches: JSON.parse(localStorage.getItem('d_search_v5')) || {}
+        };
+
+        function save() {
+            localStorage.setItem('d_scam_v5', JSON.stringify(db.scammers));
+            localStorage.setItem('d_comp_v5', JSON.stringify(db.complaints));
+            localStorage.setItem('d_search_v5', JSON.stringify(db.searches));
+        }
+
+        function setPage(html) {
+            const app = document.getElementById('app');
+            app.classList.remove('animate');
+            void app.offsetWidth;
+            app.innerHTML = html;
+            app.classList.add('animate');
+            lucide.createIcons();
+            window.scrollTo(0,0);
+        }
+
+        // --- ГЛАВНАЯ ---
+        function renderHome() {
+            setPage(`
+                <div style="text-align:center; margin: 20px 0 40px">
+                    <h1 style="font-size:36px; font-weight:900; margin:0">DELS <span>BASE</span></h1>
+                    <p style="color:var(--hint); font-weight:500">Premium Security Hub</p>
+                </div>
+                <div class="menu-card" onclick="renderSearch()">
+                    <div class="icon-box" style="color:var(--danger)"><i data-lucide="shield-search"></i></div>
+                    <div><h3>Поиск мошенников</h3><p>Проверить по базе ЧС</p></div>
+                </div>
+                <div class="menu-card" onclick="renderReport()">
+                    <div class="icon-box" style="color:var(--accent)"><i data-lucide="file-warning"></i></div>
+                    <div><h3>Подать жалобу</h3><p>Репорт на пользователя</p></div>
+                </div>
+                <div class="menu-card" onclick="alert('Гарант сервис доступен только в Telegram')">
+                    <div class="icon-box" style="color:var(--success)"><i data-lucide="check-circle"></i></div>
+                    <div><h3>DELS Гарант</h3><p>Безопасная сделка</p></div>
+                </div>
+            `);
+        }
+
+        // --- ПРОФИЛЬ ---
+        function renderProfile() {
+            const isScam = db.scammers.find(s => s.username.toLowerCase() === ME.username.toLowerCase());
+            const count = db.searches[ME.username.toLowerCase()] || 0;
+            
+            let adminBtn = ME.username.toLowerCase() === "@treedexe" 
+                ? `<button class="btn-main" style="background:var(--grad); margin-top:20px; box-shadow: 0 10px 20px var(--accent-glow);" onclick="renderAdmin()">Админ-панель</button>` 
+                : "";
+
+            setPage(`
+                <button class="btn-back" onclick="renderHome()"><i data-lucide="chevron-left"></i> Назад</button>
+                <div class="glass-card">
+                    <img src="https://ui-avatars.com/api/?name=T&background=5856d6&color=fff" style="width:100px; height:100px; border-radius:30px; border:4px solid var(--bg)">
+                    <h2 style="margin:15px 0 5px">${ME.username} ${isScam ? '<span class="scam-badge">SCAM</span>' : ''}</h2>
+                    <div class="search-stat">Проверок профиля: ${count}</div><br>
+                    
+                    <div class="status-box ${isScam ? 'scam' : 'safe'}">
+                        <b>${isScam ? 'ВНИМАНИЕ! Вы в черном списке.' : 'Вы чисты перед системой.'}</b><br>
+                        <span style="opacity:0.8; font-size:13px">${isScam ? 'Ваш аккаунт имеет метку мошенника.' : 'К вам нет претензий от модерации.'}</span>
+                    </div>
+                    ${adminBtn}
+                </div>
+            `);
+        }
+
+        // --- ПОИСК (ГЕНЕРАЦИЯ ПРОФИЛЯ) ---
+        function renderSearch() {
+            setPage(`
+                <button class="btn-back" onclick="renderHome()"><i data-lucide="chevron-left"></i> Назад</button>
+                <h2 style="margin-bottom:20px">Поиск в Telegram</h2>
+                <input type="text" id="sq" placeholder="@username или ID">
+                <button class="btn-main" onclick="runSearch()">Найти профиль</button>
+                <div id="sr"></div>
+            `);
+        }
+
+        function runSearch() {
+            const q = document.getElementById('sq').value.trim().toLowerCase();
+            if(!q) return;
+
+            // Логика счетчика
+            db.searches[q] = (db.searches[q] || 0) + 1;
+            save();
+
+            const isScam = db.scammers.find(s => s.username.toLowerCase() === q || s.id === q);
+            const res = document.getElementById('sr');
+            const cleanName = q.replace('@', '');
+
+            res.innerHTML = `
+                <div class="glass-card animate" style="margin-top:20px; border-color:${isScam ? 'var(--danger)' : 'var(--border)'}">
+                    <img src="https://ui-avatars.com/api/?name=${cleanName}&background=${isScam ? 'ff3b30' : '333'}&color=fff" style="width:90px; border-radius:25px">
+                    <h2 style="margin:15px 0 5px">${q} ${isScam ? '<span class="scam-badge">SCAM</span>' : ''}</h2>
+                    <div class="search-stat">Запросов по этому нику: ${db.searches[q]}</div>
+                    
+                    <div class="status-box ${isScam ? 'scam' : 'safe'}">
+                        <i data-lucide="${isScam ? 'alert-octagon' : 'check-shield'}" style="vertical-align:middle; margin-right:8px"></i>
+                        <b>${isScam ? 'ПОДТВЕРЖДЕННЫЙ SCAM' : 'ПРОФИЛЬ НЕ В ЧС'}</b><br>
+                        <p style="margin:10px 0 0; font-size:13px; opacity:0.8">
+                            ${isScam ? 'Причина: ' + isScam.reason : 'Данного пользователя нет в нашей базе, но это не гарантирует его честность. Всегда используйте Гарант.'}
+                        </p>
+                    </div>
+                </div>`;
+            lucide.createIcons();
+        }
+
+        // --- ЖАЛОБА ---
+        function renderReport() {
+            setPage(`
+                <button class="btn-back" onclick="renderHome()"><i data-lucide="chevron-left"></i> Назад</button>
+                <h2>Создать жалобу</h2>
+                <input type="text" id="rt" placeholder="Никнейм нарушителя (@...)">
+                <textarea id="rr" rows="4" placeholder="Опишите ситуацию подробно..."></textarea>
+                <button class="btn-main" onclick="sendReport()">Отправить на проверку</button>
+            `);
+        }
+
+        function sendReport() {
+            const target = document.getElementById('rt').value;
+            const text = document.getElementById('rr').value;
+            if(!target || !text) return;
+            db.complaints.push({ id: Date.now(), from: ME.username, target, text });
+            save();
+            alert("Ваша жалоба принята и будет рассмотрена @treedexe");
+            renderHome();
+        }
+
+        // --- АДМИНКА ---
+        function renderAdmin() {
+            if(ME.username.toLowerCase() !== "@treedexe") return renderHome();
+            let html = `
+                <button class="btn-back" onclick="renderProfile()"><i data-lucide="chevron-left"></i> Назад</button>
+                <h2>Панель @treedexe</h2>
+                <div class="glass-card" style="text-align:left; padding:20px; margin-bottom:20px">
+                    <h4 style="margin:0 0 10px">Мгновенная блокировка</h4>
+                    <input type="text" id="au" placeholder="@username" style="margin-bottom:8px">
+                    <input type="text" id="ar" placeholder="Причина бани">
+                    <button class="btn-main" onclick="adminAdd()" style="padding:15px">Внести в базу</button>
+                </div>
+                <h3 style="margin-bottom:15px">Очередь жалоб (${db.complaints.length})</h3>
+            `;
+            db.complaints.forEach(c => {
+                html += `
+                    <div class="admin-item animate">
+                        <div style="font-size:12px; color:var(--accent); font-weight:700">ОТ: ${c.from}</div>
+                        <div style="font-weight:900; font-size:18px; margin:5px 0">ЦЕЛЬ: ${c.target}</div>
+                        <p style="color:#ccc; font-size:14px">${c.text}</p>
+                        <div style="display:flex; gap:10px; margin-top:15px">
+                            <button onclick="approve(${c.id})" style="flex:1; background:var(--success); border:none; border-radius:12px; padding:12px; color:#fff; font-weight:800">ОДОБРИТЬ</button>
+                            <button onclick="reject(${c.id})" style="flex:1; background:var(--danger); border:none; border-radius:12px; padding:12px; color:#fff; font-weight:800">ОТКЛОНИТЬ</button>
+                        </div>
+                    </div>`;
+            });
+            setPage(html);
+        }
+
+        function adminAdd() {
+            const u = document.getElementById('au').value;
+            const r = document.getElementById('ar').value;
+            if(!u || !r) return;
+            db.scammers.push({ id: "Manual", username: u, reason: r });
+            save(); alert("Объект забанен."); renderAdmin();
+        }
+
+        function approve(id) {
+            const c = db.complaints.find(x => x.id === id);
+            db.scammers.push({ id: id.toString(), username: c.target, reason: c.text });
+            db.complaints = db.complaints.filter(x => x.id !== id);
+            save(); renderAdmin();
+        }
+
+        function reject(id) {
+            db.complaints = db.complaints.filter(x => x.id !== id);
+            save(); renderAdmin();
+        }
+
+        window.onload = () => {
+            document.getElementById('headNick').innerText = ME.username;
+            renderHome();
+        };
+    </script>
+</body>
+</html>
