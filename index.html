@@ -145,7 +145,7 @@
             const q = document.getElementById('sIn').value.trim();
             if(!isValidTarget(q)) return tg.showAlert("Введите ник через @ или числовой ID");
             
-            document.getElementById('sRes').innerHTML = '<p style="text-align:center; padding:20px; opacity:0.5">Поиск в глобальной базе...</p>';
+            document.getElementById('sRes').innerHTML = '<p style="text-align:center; padding:20px; opacity:0.5">Поиск в глобальной базе данных...</p>';
             
             const { data: scams } = await supabaseClient.from('scammers').select('*').or(`username.eq.${q.toLowerCase()},id_tg.eq.${q}`);
             const { data: vData } = await supabaseClient.from('verified_users').select('*').eq('username', q.toLowerCase());
@@ -180,7 +180,7 @@
             let h = `<div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left"></i> Назад</div><h2>Админ-панель</h2>
             <button class="btn-action" style="background:var(--verified); margin-bottom:10px" onclick="renderAdminVerify()">Выдать верификацию</button>
             <button class="btn-action" style="background:var(--danger); margin-bottom:10px" onclick="renderAdminScamManual()">Добавить в скам-базу</button>
-            <button class="btn-action" style="background:#333; margin-bottom:20px" onclick="renderAdminStats()">Статистика Real-Time</button>
+            <button class="btn-action" style="background:#333; margin-bottom:20px" onclick="renderAdminStats()">Статистика DelsBase</button>
             
             <div class="admin-section"><h4>Жалобы на проверку (${reps?.length || 0})</h4></div>`;
             
@@ -191,8 +191,8 @@
                     <div style="font-size:12px; color:#ccc; line-height:1.4">${c.text}</div>
                     ${c.photo ? `<img src="${c.photo}" style="width:120px; border-radius:10px; margin-top:5px; border:1px solid var(--border)">` : ''}
                     <div style="display:flex; gap:8px; width:100%; margin-top:10px">
-                        <button class="btn-action" style="background:var(--success); padding:10px; font-size:12px" onclick="admHandleRep('${c.id}', '${c.target}', '${c.text}', true)">БАН</button>
-                        <button class="btn-action" style="background:rgba(255,255,255,0.05); padding:10px; font-size:12px" onclick="admHandleRep('${c.id}', '', '', false)">ОТКЛОНИТЬ</button>
+                        <button class="btn-action" style="background:var(--success); padding:10px; font-size:12px" onclick="admHandleRep('${c.id}', '${c.target}', '${c.text}', true)">Принять</button>
+                        <button class="btn-action" style="background:rgba(255,255,255,0.05); padding:10px; font-size:12px" onclick="admHandleRep('${c.id}', '', '', false)">Отклонить</button>
                     </div>
                 </div>`;
             });
@@ -233,7 +233,7 @@
                 <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
                 <h2>Подать жалобу</h2>
                 <input type="text" id="rTarget" placeholder="@username или ID скамера">
-                <textarea id="rText" rows="4" placeholder="Суть жалобы..."></textarea>
+                <textarea id="rText" rows="4" placeholder="Причина жалобы..."></textarea>
                 <input type="file" id="fIn" hidden accept="image/*" onchange="procImg(this)">
                 <button class="btn-action" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-bottom:10px" onclick="document.getElementById('fIn').click()">Прикрепить фото</button>
                 <div style="display:flex; justify-content:center"><img id="previewImage"></div>
@@ -254,7 +254,7 @@
             const t = document.getElementById('rTarget').value; const tx = document.getElementById('rText').value;
             if(!isValidTarget(t) || !tx) return;
             await supabaseClient.from('complaints').insert([{ from_user: ME.username, target: t, text: tx, photo: reportPhoto }]);
-            tg.showPopup({ title: "Успешно", message: "Жалоба принята! Проверка займет до 10 минут." }, () => renderHome());
+            tg.showPopup({ title: "Успешно", message: "Жалоба отправлено на проверку! Проверка займет до 10 минут." }, () => renderHome());
         }
 
         async function renderMyProfile() {
@@ -274,7 +274,7 @@
         }
 
         function renderAdminStats() {
-            setPage(`<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div><h2>Статистика проекта</h2><div class="stat-grid animate"><div class="stat-box"><b id="st-u">...</b><span>Пользователей</span></div><div class="stat-box"><b id="st-sc">...</b><span>База скама</span></div><div class="stat-box"><b id="st-r">...</b><span>Жалоб</span></div><div class="stat-box"><b id="st-v">...</b><span>Верифицировано</span></div></div>`);
+            setPage(`<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div><h2>Статистика проекта</h2><div class="stat-grid animate"><div class="stat-box"><b id="st-u">...</b><span>Пользователей</span></div><div class="stat-box"><b id="st-sc">...</b><span>Скамеров в базе</span></div><div class="stat-box"><b id="st-r">...</b><span>Активных жалоб</span></div><div class="stat-box"><b id="st-v">...</b><span>Верифицировано</span></div></div>`);
             const upd = async () => {
                 const { count: u } = await supabaseClient.from('users_list').select('*', { count: 'exact', head: true });
                 const { count: sc } = await supabaseClient.from('scammers').select('*', { count: 'exact', head: true });
@@ -292,7 +292,7 @@
 
         function renderAdminScamManual() { setPage(`<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div><h2>Ручной бан</h2><input type="text" id="sT" placeholder="@username или ID"><textarea id="sR" placeholder="Причина..."></textarea><button class="btn-action" onclick="admAddScamManual()">Забанить</button>`); }
         async function admAddScamManual() { await supabaseClient.from('scammers').insert([{username: document.getElementById('sT').value, reason: document.getElementById('sR').value}]); renderAdminDashboard(); }
-        function renderGarant() { setPage(`<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><div class="glass-card animate"><div class="item-icon" style="margin: 0 auto 15px; color: var(--success); width: 50px; height: 50px; background: rgba(52,199,89,0.1)"><i data-lucide="shield-check" size="28"></i></div><h2>DELS Гарант</h2><p style="color:var(--hint); font-size:13px">Безопасные сделки.</p><button class="btn-action" style="margin-top:15px" onclick="contactSupport()">Связаться</button></div>`); }
+        function renderGarant() { setPage(`<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><div class="glass-card animate"><div class="item-icon" style="margin: 0 auto 15px; color: var(--success); width: 50px; height: 50px; background: rgba(52,199,89,0.1)"><i data-lucide="shield-check" size="28"></i></div><h2>DELS Гарант</h2><p style="color:var(--hint); font-size:13px">Безопасные сделки.</p><button class="btn-action" style="margin-top:15px" onclick="contactSupport()">Связаться с гарантом</button></div>`); }
 
         window.onload = async () => {
             document.getElementById('hName').innerText = ME.username;
@@ -303,3 +303,4 @@
     </script>
 </body>
 </html>
+
