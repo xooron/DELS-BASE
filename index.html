@@ -24,11 +24,15 @@
         @keyframes move { from { transform: translate(-20%, -20%); } to { transform: translate(30%, 20%); } }
 
         header { height: 70px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(25px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border); }
-        .logo { font-size: 19px; font-weight: 900; text-transform: uppercase; cursor: pointer; }
+        .logo { font-size: 19px; font-weight: 900; text-transform: uppercase; cursor: pointer; flex-shrink: 0; }
         .logo span { color: var(--accent); }
 
-        .profile-pill { display: flex; align-items: center; gap: 10px; padding: 5px 5px 5px 12px; border-radius: 50px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); cursor: pointer; }
-        .profile-pill img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--accent); }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .profile-pill { display: flex; align-items: center; gap: 8px; padding: 5px 5px 5px 12px; border-radius: 50px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); cursor: pointer; }
+        .profile-pill img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--accent); }
+        
+        .notification-btn { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; color: #fff; }
+        .notification-badge { position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: var(--danger); border-radius: 50%; border: 2px solid #000; display: none; }
 
         #dropdownMenu { position: absolute; top: 80px; right: 20px; width: 195px; background: var(--panel); border: 1px solid var(--border); border-radius: 22px; backdrop-filter: blur(25px); display: none; flex-direction: column; overflow: hidden; z-index: 1001; }
         .menu-link { padding: 16px 20px; font-size: 14px; font-weight: 700; color: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; cursor: pointer; }
@@ -50,14 +54,16 @@
         .btn-action:active { transform: scale(0.98); opacity: 0.9; }
         
         .back-nav { color: var(--accent); font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; font-size: 13px; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .stat-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 18px; padding: 15px; text-align: center; }
-        .stat-box b { font-size: 22px; display: block; color: var(--accent); }
-        .stat-box span { font-size: 10px; color: var(--hint); font-weight: 700; }
-        #previewImage { max-width: 140px; max-height: 140px; border-radius: 12px; margin: 10px auto; display: none; border: 1px solid var(--border); object-fit: cover; }
+        
+        /* Skeleton */
+        .skeleton { background: linear-gradient(90deg, #1a1a1c 25%, #27272a 50%, #1a1a1c 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite linear; border-radius: 12px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton-card { padding: 35px 20px; background: var(--panel); border-radius: 30px; border: 1px solid var(--border); text-align: center; }
 
-        .admin-section { text-align: left; margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px; }
-        .admin-section h4 { margin: 0 0 12px 0; font-size: 13px; color: var(--accent); text-transform: uppercase; }
+        .notify-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 20px; padding: 15px; margin-bottom: 10px; }
+        .notify-item h4 { margin: 0 0 5px 0; font-size: 15px; color: var(--accent); }
+        .notify-item p { margin: 0; font-size: 13px; color: #ccc; line-height: 1.4; }
+        .notify-item small { font-size: 10px; color: var(--hint); margin-top: 8px; display: block; }
 
         @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate { animation: viewIn 0.4s var(--spring) forwards; }
@@ -67,9 +73,15 @@
     <div class="bg-animation"><div class="blob"></div></div>
     <header>
         <div class="logo" onclick="renderHome()">DELS<span>BASE</span></div>
-        <div class="profile-pill" onclick="toggleMenu()">
-            <span id="hName" style="font-size:13px; font-weight:700">@...</span>
-            <img id="hImg" src="">
+        <div class="header-right">
+            <div class="profile-pill" onclick="toggleMenu()">
+                <span id="hName" style="font-size:12px; font-weight:700">@...</span>
+                <img id="hImg" src="">
+            </div>
+            <div class="notification-btn" onclick="renderNotifications()">
+                <i data-lucide="bell" size="20"></i>
+                <div class="notification-badge" id="nBadge"></div>
+            </div>
         </div>
         <div id="dropdownMenu">
             <div class="menu-link" onclick="renderMyProfile()"><i data-lucide="user"></i> Профиль</div>
@@ -81,7 +93,6 @@
     <main id="app"></main>
 
     <script>
-        // --- ДАННЫЕ SUPABASE ---
         const SUPABASE_URL = 'https://hrixnvenlcsskysijabq.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_UopsF6xZ16MKgPjmhxFSlA_gtYcX7sa';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -99,24 +110,19 @@
 
         const ADMIN_NICK = "@treedexe";
         const V_ICON = `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Twitter_Verified_Badge.svg/1280px-Twitter_Verified_Badge.svg.png" class="v-check">`;
-        let statsInterval = null;
-
-        function isValidTarget(str) { return str && (str.startsWith('@') || /^\d+$/.test(str)); }
-
+        
         function setPage(html) {
-            if(statsInterval) clearInterval(statsInterval);
             const app = document.getElementById('app');
             app.innerHTML = html;
             lucide.createIcons();
             document.getElementById('dropdownMenu').style.display = 'none';
+            window.scrollTo(0,0);
         }
 
         function toggleMenu() {
             const m = document.getElementById('dropdownMenu');
             m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
         }
-
-        function contactSupport() { window.open("https://t.me/durovspepka", '_blank'); }
 
         function renderHome() {
             setPage(`
@@ -125,27 +131,59 @@
                 </div>
                 <div class="menu-grid animate">
                     <div class="menu-item" onclick="renderSearch()">
-                        <div class="item-icon"><i data-lucide="search" size="22"></i></div>
+                        <div class="item-icon"><i data-lucide="search"></i></div>
                         <div class="item-info"><h3>Поиск скамеров</h3><p>Проверка контрагента по базе.</p></div>
                     </div>
                     <div class="menu-item" onclick="renderReport()">
-                        <div class="item-icon"><i data-lucide="shield-alert" size="22"></i></div>
+                        <div class="item-icon"><i data-lucide="shield-alert"></i></div>
                         <div class="item-info"><h3>Подать жалобу</h3><p>Сообщите о факте мошенничества.</p></div>
                     </div>
                     <div class="menu-item" onclick="renderGarant()">
-                        <div class="item-icon" style="color:var(--success)"><i data-lucide="shield-check" size="22"></i></div>
+                        <div class="item-icon" style="color:var(--success)"><i data-lucide="shield-check"></i></div>
                         <div class="item-info"><h3>DELS Гарант</h3><p>Безопасные сделки от DelsBase.</p></div>
                     </div>
                 </div>
             `);
         }
 
-        // --- ГЛОБАЛЬНЫЙ ПОИСК ---
+        // --- УВЕДОМЛЕНИЯ ---
+        async function renderNotifications() {
+            document.getElementById('nBadge').style.display = 'none';
+            setPage(`
+                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
+                <h2>Уведомления</h2>
+                <div id="nList"><p style="opacity:0.5; text-align:center; padding:20px">Загрузка...</p></div>
+            `);
+            
+            const { data, error } = await supabaseClient.from('notifications').select('*').order('created_at', { ascending: false });
+            
+            const list = document.getElementById('nList');
+            if(!data || data.length === 0) {
+                list.innerHTML = '<p style="opacity:0.5; text-align:center; padding:20px">Уведомлений пока нет</p>';
+                return;
+            }
+
+            list.innerHTML = data.map(n => `
+                <div class="notify-item animate">
+                    <h4>${n.title}</h4>
+                    <p>${n.message}</p>
+                    <small>${new Date(n.created_at).toLocaleString()}</small>
+                </div>
+            `).join('');
+        }
+
+        // --- ПОИСК ---
         async function doSearch() {
             const q = document.getElementById('sIn').value.trim();
             if(!isValidTarget(q)) return tg.showAlert("Введите ник через @ или числовой ID");
             
-            document.getElementById('sRes').innerHTML = '<p style="text-align:center; padding:20px; opacity:0.5">Поиск в глобальной базе данных...</p>';
+            tg.HapticFeedback.selectionChanged();
+            document.getElementById('sRes').innerHTML = `
+                <div class="skeleton-card animate" style="margin-top:20px;">
+                    <div class="skeleton" style="width:80px; height:80px; border-radius:25px; margin: 0 auto 15px;"></div>
+                    <div class="skeleton" style="width:60%; height:20px; margin: 0 auto 10px;"></div>
+                    <div class="skeleton" style="width:40%; height:14px; margin: 0 auto 20px;"></div>
+                </div>`;
             
             const { data: scams } = await supabaseClient.from('scammers').select('*').or(`username.eq.${q.toLowerCase()},id_tg.eq.${q}`);
             const { data: vData } = await supabaseClient.from('verified_users').select('*').eq('username', q.toLowerCase());
@@ -153,6 +191,9 @@
             const scam = scams?.[0];
             const verified = vData?.length > 0 || ["@treedexe", "@durovspepka"].includes(q.toLowerCase());
             const clean = q.replace('@','');
+
+            if(scam) tg.HapticFeedback.notificationOccurred('error');
+            else tg.HapticFeedback.notificationOccurred('success');
 
             document.getElementById('sRes').innerHTML = `
                 <div class="glass-card animate" style="margin-top:20px; border-color:${scam ? 'var(--danger)' : 'var(--border)'}">
@@ -164,100 +205,61 @@
                 </div>`;
         }
 
-        function renderSearch() {
-            setPage(`
-                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
-                <h2>Поиск в базе</h2>
-                <input type="text" id="sIn" placeholder="@username или ID">
-                <button class="btn-action" onclick="doSearch()">Проверить</button>
-                <div id="sRes"></div>
-            `);
-        }
-
         // --- АДМИНКА ---
         async function renderAdminDashboard() {
+            setPage(`
+                <div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left"></i> Назад</div>
+                <h2>Админ-панель</h2>
+                <button class="btn-action" style="background:#ff9500; margin-bottom:10px" onclick="renderAdminCreateNotify()">Отправить уведомление</button>
+                <button class="btn-action" style="background:var(--verified); margin-bottom:10px" onclick="renderAdminVerify()">Выдать верификацию</button>
+                <button class="btn-action" style="background:var(--danger); margin-bottom:10px" onclick="renderAdminScamManual()">Ручной бан</button>
+                <button class="btn-action" style="background:#333; margin-bottom:20px" onclick="renderAdminStats()">Статистика</button>
+                <div id="adminReps">Загрузка жалоб...</div>
+            `);
+            
             const { data: reps } = await supabaseClient.from('complaints').select('*');
-            let h = `<div class="back-nav" onclick="renderMyProfile()"><i data-lucide="arrow-left"></i> Назад</div><h2>Админ-панель</h2>
-            <button class="btn-action" style="background:var(--verified); margin-bottom:10px" onclick="renderAdminVerify()">Выдать верификацию</button>
-            <button class="btn-action" style="background:var(--danger); margin-bottom:10px" onclick="renderAdminScamManual()">Добавить в скам-базу</button>
-            <button class="btn-action" style="background:#333; margin-bottom:20px" onclick="renderAdminStats()">Статистика DelsBase</button>
-            
-            <div class="admin-section"><h4>Жалобы на проверку (${reps?.length || 0})</h4></div>`;
-            
-            reps?.forEach((c, idx) => {
-                h += `
-                <div class="menu-item animate" style="flex-direction:column; gap:10px; cursor:default">
-                    <div style="font-size:13px"><b>ОТ:</b> ${c.from_user} ➔ <b>НА:</b> ${c.target}</div>
-                    <div style="font-size:12px; color:#ccc; line-height:1.4">${c.text}</div>
-                    ${c.photo ? `<img src="${c.photo}" style="width:120px; border-radius:10px; margin-top:5px; border:1px solid var(--border)">` : ''}
-                    <div style="display:flex; gap:8px; width:100%; margin-top:10px">
-                        <button class="btn-action" style="background:var(--success); padding:10px; font-size:12px" onclick="admHandleRep('${c.id}', '${c.target}', '${c.text}', true)">Принять</button>
-                        <button class="btn-action" style="background:rgba(255,255,255,0.05); padding:10px; font-size:12px" onclick="admHandleRep('${c.id}', '', '', false)">Отклонить</button>
+            const div = document.getElementById('adminReps');
+            div.innerHTML = `<h4>Жалобы на проверку (${reps?.length || 0})</h4>`;
+            reps?.forEach(c => {
+                div.innerHTML += `
+                <div class="menu-item animate" style="flex-direction:column; gap:10px">
+                    <div style="font-size:12px"><b>ОТ:</b> ${c.from_user} ➔ <b>НА:</b> ${c.target}</div>
+                    <div style="font-size:12px; opacity:0.8">${c.text}</div>
+                    <div style="display:flex; gap:8px; width:100%">
+                        <button class="btn-action" style="padding:10px; font-size:12px" onclick="admHandleRep('${c.id}', '${c.target}', '${c.text}', true)">Бан</button>
+                        <button class="btn-action" style="background:#333; padding:10px; font-size:12px" onclick="admHandleRep('${c.id}', '', '', false)">Отказ</button>
                     </div>
                 </div>`;
             });
-            setPage(h || '<h2>Жалоб нет</h2>');
         }
 
-        async function admHandleRep(id, target, reason, isBan) {
-            if(isBan) {
-                await supabaseClient.from('scammers').insert([{ username: target, reason: reason, id_tg: target.replace('@','') }]);
-            }
-            await supabaseClient.from('complaints').delete().eq('id', id);
-            tg.showAlert(isBan ? "Пользователь забанен!" : "Жалоба отклонена.");
-            renderAdminDashboard();
-        }
-
-        // --- ВЕРИФИКАЦИЯ ---
-        function renderAdminVerify() {
+        function renderAdminCreateNotify() {
             setPage(`
                 <div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div>
-                <h2>Выдать галочку</h2>
-                <input type="text" id="vT" placeholder="@username пользователя">
-                <button class="btn-action" onclick="admGiveV()">Подтвердить верификацию</button>
+                <h2>Создать уведомление</h2>
+                <input type="text" id="ntTitle" placeholder="Заголовок (напр. Обновление)">
+                <textarea id="ntMsg" rows="4" placeholder="Текст сообщения для всех пользователей..."></textarea>
+                <button class="btn-action" onclick="admSendNotify()">Разослать всем</button>
             `);
         }
-        async function admGiveV() {
-            const user = document.getElementById('vT').value.trim().toLowerCase();
-            if(!user.startsWith('@')) return tg.showAlert("Введите ник с @");
-            await supabaseClient.from('verified_users').insert([{username: user}]);
-            tg.showAlert("Верификация выдана!");
+
+        async function admSendNotify() {
+            const t = document.getElementById('ntTitle').value;
+            const m = document.getElementById('ntMsg').value;
+            if(!t || !m) return;
+            await supabaseClient.from('notifications').insert([{ title: t, message: m }]);
+            tg.showAlert("Уведомление отправлено!");
             renderAdminDashboard();
         }
 
-        // --- ОСТАЛЬНОЕ ---
-        let reportPhoto = "";
-        function renderReport() {
-            reportPhoto = "";
-            setPage(`
-                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
-                <h2>Подать жалобу</h2>
-                <input type="text" id="rTarget" placeholder="@username или ID скамера">
-                <textarea id="rText" rows="4" placeholder="Причина жалобы..."></textarea>
-                <input type="file" id="fIn" hidden accept="image/*" onchange="procImg(this)">
-                <button class="btn-action" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); margin-bottom:10px" onclick="document.getElementById('fIn').click()">Прикрепить фото</button>
-                <div style="display:flex; justify-content:center"><img id="previewImage"></div>
-                <button class="btn-action" onclick="sendReport()">Отправить</button>
-            `);
-        }
-
-        function procImg(i) {
-            const f = i.files[0];
-            if(f) {
-                const r = new FileReader();
-                r.onload = e => { reportPhoto = e.target.result; const p = document.getElementById('previewImage'); p.src = reportPhoto; p.style.display="block"; };
-                r.readAsDataURL(f);
-            }
-        }
-
-        async function sendReport() {
-            const t = document.getElementById('rTarget').value; const tx = document.getElementById('rText').value;
-            if(!isValidTarget(t) || !tx) return;
-            await supabaseClient.from('complaints').insert([{ from_user: ME.username, target: t, text: tx, photo: reportPhoto }]);
-            tg.showPopup({ title: "Успешно", message: "Жалоба отправлено на проверку! Проверка займет до 10 минут." }, () => renderHome());
-        }
+        // --- ВСПОМОГАТЕЛЬНЫЕ ---
+        function isValidTarget(str) { return str && (str.startsWith('@') || /^\d+$/.test(str)); }
+        function contactSupport() { window.open("https://t.me/durovspepka", '_blank'); }
+        function renderSearch() { setPage(`<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><h2>Поиск</h2><input type="text" id="sIn" placeholder="@username или ID"><button class="btn-action" onclick="doSearch()">Проверить</button><div id="sRes"></div>`); }
+        function renderGarant() { setPage(`<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><div class="glass-card animate"><h2>DELS Гарант</h2><p style="color:var(--hint)">Безопасные сделки.</p><button class="btn-action" onclick="contactSupport()">Связаться с гарантом</button></div>`); }
 
         async function renderMyProfile() {
+            setPage(`<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><div class="skeleton-card animate"><div class="skeleton" style="width:100px; height:100px; border-radius:30px; margin:0 auto"></div></div>`);
             const { data: scams } = await supabaseClient.from('scammers').select('*').or(`username.eq.${ME.username.toLowerCase()},id_tg.eq.${ME.id}`);
             const { data: vData } = await supabaseClient.from('verified_users').select('*').eq('username', ME.username.toLowerCase());
             const scam = scams?.[0];
@@ -266,41 +268,39 @@
                 <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
                 <div class="glass-card animate">
                     <img src="${ME.photo}" style="width:110px; height:110px; border-radius:35px; border:4px solid var(--accent); padding:3px; object-fit:cover; margin-bottom:15px">
-                    <h2 style="margin:0; font-size:26px; font-weight:900">${ME.name}${verified ? V_ICON : ''}</h2>
-                    <div style="margin-top:8px; color:var(--hint); font-size:15px; font-weight:600">${ME.username} | ID: ${ME.id}</div>
+                    <h2 style="margin:0">${ME.name}${verified ? V_ICON : ''}</h2>
+                    <div style="margin:8px 0; color:var(--hint); font-size:14px">${ME.username} | ID: ${ME.id}</div>
                     <div class="status-badge ${scam ? 'scam-tag' : (verified ? 'verified-tag' : '')}">${scam ? 'SCAM' : (verified ? 'ВЕРИФИЦИРОВАН' : 'НЕТ ИНФОРМАЦИИ')}</div>
-                    ${ME.username.toLowerCase() === ADMIN_NICK ? `<button class="btn-action" style="margin-top:25px; background:#af52de" onclick="renderAdminDashboard()">Управление</button>` : ""}
+                    ${ME.username.toLowerCase() === ADMIN_NICK ? `<button class="btn-action" style="margin-top:20px; background:#af52de" onclick="renderAdminDashboard()">Админ-панель</button>` : ""}
                 </div>`);
         }
 
-        function renderAdminStats() {
-            setPage(`<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div><h2>Статистика проекта</h2><div class="stat-grid animate"><div class="stat-box"><b id="st-u">...</b><span>Пользователей</span></div><div class="stat-box"><b id="st-sc">...</b><span>Скамеров в базе</span></div><div class="stat-box"><b id="st-r">...</b><span>Активных жалоб</span></div><div class="stat-box"><b id="st-v">...</b><span>Верифицировано</span></div></div>`);
-            const upd = async () => {
-                const { count: u } = await supabaseClient.from('users_list').select('*', { count: 'exact', head: true });
-                const { count: sc } = await supabaseClient.from('scammers').select('*', { count: 'exact', head: true });
-                const { count: r } = await supabaseClient.from('complaints').select('*', { count: 'exact', head: true });
-                const { count: v } = await supabaseClient.from('verified_users').select('*', { count: 'exact', head: true });
-                if(document.getElementById('st-u')) {
-                    document.getElementById('st-u').innerText = u || 0;
-                    document.getElementById('st-sc').innerText = sc || 0;
-                    document.getElementById('st-r').innerText = r || 0;
-                    document.getElementById('st-v').innerText = (v || 0) + 2;
-                }
-            };
-            upd(); statsTimer = setInterval(upd, 2000);
+        async function renderReport() {
+            setPage(`
+                <div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div>
+                <h2>Жалоба</h2>
+                <input type="text" id="rT" placeholder="@username или ID скамера">
+                <textarea id="rTx" rows="4" placeholder="Опишите ситуацию..."></textarea>
+                <button class="btn-action" onclick="sendReport()">Отправить на проверку</button>
+            `);
         }
 
-        function renderAdminScamManual() { setPage(`<div class="back-nav" onclick="renderAdminDashboard()"><i data-lucide="arrow-left"></i> Назад</div><h2>Ручной бан</h2><input type="text" id="sT" placeholder="@username или ID"><textarea id="sR" placeholder="Причина..."></textarea><button class="btn-action" onclick="admAddScamManual()">Забанить</button>`); }
-        async function admAddScamManual() { await supabaseClient.from('scammers').insert([{username: document.getElementById('sT').value, reason: document.getElementById('sR').value}]); renderAdminDashboard(); }
-        function renderGarant() { setPage(`<div class="back-nav" onclick="renderHome()"><i data-lucide="arrow-left"></i> Назад</div><div class="glass-card animate"><div class="item-icon" style="margin: 0 auto 15px; color: var(--success); width: 50px; height: 50px; background: rgba(52,199,89,0.1)"><i data-lucide="shield-check" size="28"></i></div><h2>DELS Гарант</h2><p style="color:var(--hint); font-size:13px">Безопасные сделки.</p><button class="btn-action" style="margin-top:15px" onclick="contactSupport()">Связаться с гарантом</button></div>`); }
+        async function sendReport() {
+            const t = document.getElementById('rT').value; const tx = document.getElementById('rTx').value;
+            if(!t || !tx) return;
+            await supabaseClient.from('complaints').insert([{ from_user: ME.username, target: t, text: tx }]);
+            tg.showPopup({ title: "Готово", message: "Жалоба принята." }, () => renderHome());
+        }
 
         window.onload = async () => {
             document.getElementById('hName').innerText = ME.username;
             document.getElementById('hImg').src = ME.photo;
             renderHome();
             try { await supabaseClient.from('users_list').upsert([{ user_id: ME.id }]); } catch (e) {}
+            // Проверка новых уведомлений (badge)
+            const { count } = await supabaseClient.from('notifications').select('*', { count: 'exact', head: true });
+            if(count > 0) document.getElementById('nBadge').style.display = 'block';
         };
     </script>
 </body>
 </html>
-
